@@ -1067,6 +1067,10 @@ body {
         margin: 0;
     }
 
+    .pulsing-circles {
+        width: 220px;
+    }
+
     .hr-content {
         min-height: clamp(104px, 17vw, 140px);
         padding: 0.12rem 0;
