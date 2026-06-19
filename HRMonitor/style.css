@@ -71,6 +71,7 @@
     --current-zone-color-rgb: 74, 85, 104;
     --progress-fill-rgb: 74, 85, 104;
     --bpm-value-color: rgba(255, 255, 255, 0.92);
+    --zone-separator-color: rgba(255, 255, 255, 0.16);
     --bpm-font-size: 74px;
     --time-section-font-size: 24px;
     --time-section-letter-spacing: 0.08em;
@@ -410,6 +411,27 @@ body {
     background: linear-gradient(90deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05) 42%, rgba(0, 0, 0, 0.1));
     opacity: 0.9;
     pointer-events: none;
+}
+
+.zone-progress-separators {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.zone-progress-separator {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: var(--separator-top, 50%);
+    height: 1px;
+    transform: translateY(-0.5px);
+    background-image: repeating-linear-gradient(
+        to right,
+        var(--zone-separator-color) 0 4px,
+        transparent 4px 8px
+    );
 }
 
 .zone-progress-segment {

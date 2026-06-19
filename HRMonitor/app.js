@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const hrHistoryCurrentPoint = document.getElementById('hrHistoryCurrentPoint');
     const hrHistoryCurrentLine = document.getElementById('hrHistoryCurrentLine');
     const hrHistoryCurrentDot = document.getElementById('hrHistoryCurrentDot');
+    const zoneProgressSeparatorEls = Array.from(document.querySelectorAll('.zone-progress-separator'));
     const zoneProgressLabelEls = {
         1: document.getElementById('zone1Max'),
         2: document.getElementById('zone2Max'),
@@ -64,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { hrMin: 70, hrMax: 80, barMin: 65, barMax: 85 },
         { hrMin: 80, hrMax: 100, barMin: 85, barMax: 100 }
     ];
+    const ZONE_BOUNDARY_PERCENTS = [60, 70, 80];
 
     const ZONE_COLOR_RGB = {
         1: '0, 210, 255',
@@ -187,6 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setConnectButtonLabel('Connect HR Device');
     updateMhrDisplay();
     updateZoneProgressLabels();
+    syncZoneProgressSeparators();
     applyZoneBandVariables();
     if (appVersion) {
         appVersion.textContent = `v${APP_VERSION}`;
@@ -213,6 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mhr = calculateMHR();
         updateMhrDisplay();
         updateZoneProgressLabels();
+        syncZoneProgressSeparators();
         if (lastHeartRate !== null) {
             calculateZone(lastHeartRate);
             scheduleHrHistoryRender();
@@ -394,6 +398,24 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!target) return;
 
             target.textContent = String(Math.round((percent / 100) * mhr));
+        });
+    }
+
+    function getZoneBoundaryBarPositions() {
+        return ZONE_BOUNDARY_PERCENTS.map(percent => ({
+            percent,
+            barPosition: mapHeartRateToBarPosition(percent)
+        }));
+    }
+
+    function syncZoneProgressSeparators() {
+        const boundaryPositions = getZoneBoundaryBarPositions();
+
+        zoneProgressSeparatorEls.forEach((separatorEl, index) => {
+            const boundary = boundaryPositions[index];
+            if (!boundary) return;
+
+            separatorEl.style.setProperty('--separator-top', `${100 - boundary.barPosition}%`);
         });
     }
 
@@ -804,6 +826,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!hrHistory.length || lastHeartRate === null) {
             setHrHistoryCurrentPosition(null);
             drawHrHistoryTimeMarkers(ctx, bandLeft, bandTop, plotWidth, plotHeight);
+            drawHrZoneBoundaryLines(ctx, bandLeft, bandTop, plotWidth, plotHeight);
             return;
         }
 
@@ -814,6 +837,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!samples.length && lastHeartRate === null) {
             setHrHistoryCurrentPosition(null);
             drawHrHistoryTimeMarkers(ctx, bandLeft, bandTop, plotWidth, plotHeight);
+            drawHrZoneBoundaryLines(ctx, bandLeft, bandTop, plotWidth, plotHeight);
             return;
         }
 
@@ -859,6 +883,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         drawHrHistoryAreaSegments(ctx, segments, bandBottom);
         drawHrHistoryTimeMarkers(ctx, bandLeft, bandTop, plotWidth, plotHeight);
+        drawHrZoneBoundaryLines(ctx, bandLeft, bandTop, plotWidth, plotHeight);
         drawHrHistoryOutline(ctx, segments);
         setHrHistoryCurrentPosition(latestPoint);
     }
@@ -979,6 +1004,26 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.restore();
     }
 
+    function drawHrZoneBoundaryLines(ctx, left, top, width, height) {
+        const boundaryPositions = getZoneBoundaryBarPositions();
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
+        ctx.lineWidth = 1 * hrHistoryDpr;
+        ctx.setLineDash([4 * hrHistoryDpr, 4 * hrHistoryDpr]);
+        ctx.lineCap = 'butt';
+
+        boundaryPositions.forEach(boundary => {
+            const y = top + (1 - (boundary.barPosition / 100)) * height;
+            ctx.beginPath();
+            ctx.moveTo(left, y);
+            ctx.lineTo(left + width, y);
+            ctx.stroke();
+        });
+
+        ctx.restore();
+    }
+
     function setHrHistoryCurrentPosition(point) {
         if (!hrHistoryCurrentPoint || !hrHistoryCurrentLine || !hrHistoryCurrentDot) return;
 
@@ -1020,19 +1065,6 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.fillRect(left, y, width, bandHeight);
         });
 
-        ctx.restore();
-
-        ctx.save();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
-        ctx.lineWidth = 1 * hrHistoryDpr;
-        ctx.setLineDash([4 * hrHistoryDpr, 6 * hrHistoryDpr]);
-        ctx.beginPath();
-        [60, 70, 80].forEach(percent => {
-            const y = top + (1 - (mapHeartRateToBarPosition(percent) / 100)) * height;
-            ctx.moveTo(left, y);
-            ctx.lineTo(left + width, y);
-        });
-        ctx.stroke();
         ctx.restore();
     }
 
