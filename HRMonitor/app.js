@@ -811,11 +811,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const now = Date.now();
         pruneHrHistory(now);
+        const graphPadding = window.matchMedia('(orientation: landscape)').matches
+            ? { ...HR_GRAPH_PADDING, top: 0, bottom: 0 }
+            : HR_GRAPH_PADDING;
 
-        const bandTop = HR_GRAPH_PADDING.top * hrHistoryDpr;
-        const bandBottom = height - (HR_GRAPH_PADDING.bottom * hrHistoryDpr);
-        const bandLeft = HR_GRAPH_PADDING.left * hrHistoryDpr;
-        const bandRight = width - (HR_GRAPH_PADDING.right * hrHistoryDpr);
+        const bandTop = graphPadding.top * hrHistoryDpr;
+        const bandBottom = height - (graphPadding.bottom * hrHistoryDpr);
+        const bandLeft = graphPadding.left * hrHistoryDpr;
+        const bandRight = width - (graphPadding.right * hrHistoryDpr);
         const plotWidth = Math.max(1, bandRight - bandLeft);
         const plotHeight = Math.max(1, bandBottom - bandTop);
 

@@ -1055,18 +1055,22 @@ body {
     .hr-history-panel {
         grid-column: 2;
         grid-row: 1 / 3;
-        gap: 0.08rem;
+        gap: 0;
         min-height: 0;
         overflow: hidden;
     }
 
     .hr-history-stage {
-        min-height: 46px;
+        min-height: 0;
+        height: 100%;
     }
 
     .hr-history-axis {
-        height: 0.64rem;
-        font-size: 0.48rem;
+        height: 0;
+        min-height: 0;
+        padding: 0;
+        overflow: hidden;
+        font-size: 0;
     }
 
     .zone-summary-panel {
