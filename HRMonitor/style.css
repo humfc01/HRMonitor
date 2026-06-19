@@ -38,7 +38,7 @@ body {
         radial-gradient(circle at 50% 120%, rgba(0, 0, 0, 0.2), transparent 36%),
         linear-gradient(180deg, #111521 0%, #0b0d14 100%);
     color: var(--text-primary);
-    min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -48,14 +48,15 @@ body {
 .app-container {
     width: 100%;
     max-width: 520px;
-    min-height: 100vh;
-    height: 100dvh;
-    padding: calc(env(safe-area-inset-top, 0px) + 0.35rem) 1rem 0.85rem;
+    min-height: 100dvh;
+    height: auto;
+    padding: calc(8px + env(safe-area-inset-top, 0px)) 1rem calc(16px + env(safe-area-inset-bottom, 0px));
     display: flex;
     flex-direction: column;
     position: relative;
     background: radial-gradient(circle at 50% 0%, rgba(var(--current-zone-color-rgb, 74, 85, 104), 0.15) 0%, transparent 60%);
     transition: background 0.5s ease;
+    overflow-y: auto;
 }
 
 /* Header */
