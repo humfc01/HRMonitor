@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const APP_VERSION = window.APP_VERSION || '1.2.4';
+
     // Register Service Worker for PWA Offline Support
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
@@ -21,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const mhrDisplay = document.getElementById('mhrDisplay');
     const statusText = document.getElementById('statusText');
     const statusDot = document.getElementById('statusDot');
+    const appVersion = document.getElementById('appVersion');
     const heartIcon = document.querySelector('.heart-icon');
     const zoneTimersEl = document.getElementById('zoneTimers');
     const hrHistoryCanvas = document.getElementById('hrHistoryCanvas');
@@ -93,6 +96,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let workoutEndPromptResolver = null;
     let workoutEndPromptPromise = null;
     let disconnectInProgress = false;
+    let backGuardArmed = false;
+    let allowBackExit = false;
+    let confirmDialogOpen = false;
     const hrHistory = [];
     const HR_HISTORY_WINDOW_MS = 60 * 60 * 1000;
     const HR_GRAPH_PADDING = { top: 10, right: 8, bottom: 10, left: 8 };
@@ -100,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let hrHistoryAnimationFrame = null;
     let hrHistoryResizeObserver = null;
     let hrHistoryDpr = window.devicePixelRatio || 1;
-    let workoutHistoryStatePushed = Boolean(history.state && history.state.hrmWorkoutGuard);
+    let workoutHistoryStatePushed = Boolean(history.state && history.state.workoutGuard);
     
     // Initialize UI
     ageInput.value = age;
@@ -108,6 +114,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setConnectButtonLabel('Connect HR Device');
     updateMhrDisplay();
     updateZoneProgressLabels();
+    if (appVersion) {
+        appVersion.textContent = `v${APP_VERSION}`;
+    }
     setNoHeartRateState();
     initHrHistoryGraph();
 
@@ -210,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Start tracking session
             startTimer();
             requestWakeLock();
-            ensureWorkoutHistoryState();
+            armBackButtonGuard();
             
         } catch (error) {
             console.error(error);
@@ -258,15 +267,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.addEventListener('popstate', async () => {
-        if (!hasActiveWorkout()) return;
-
-        const shouldEndWorkout = await confirmEndWorkout();
-        if (shouldEndWorkout) {
-            await disconnect();
+        if (!hasActiveWorkout() || allowBackExit) {
             return;
         }
 
-        ensureWorkoutHistoryState();
+        if (confirmDialogOpen) {
+            history.pushState({ workoutGuard: true }, '');
+            backGuardArmed = true;
+            return;
+        }
+
+        confirmDialogOpen = true;
+        const shouldEndWorkout = await confirmEndWorkout();
+        confirmDialogOpen = false;
+
+        if (shouldEndWorkout) {
+            allowBackExit = true;
+            await disconnect();
+            history.back();
+            return;
+        }
+
+        history.pushState({ workoutGuard: true }, '');
+        backGuardArmed = true;
     });
 
     // Helper functions
@@ -330,14 +353,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return timerInterval !== null || sessionStart !== null;
     }
 
-    function ensureWorkoutHistoryState() {
-        if (workoutHistoryStatePushed || history.state && history.state.hrmWorkoutGuard) {
+    function armBackButtonGuard() {
+        if (backGuardArmed || (history.state && history.state.workoutGuard)) {
+            backGuardArmed = true;
             workoutHistoryStatePushed = true;
             return;
         }
 
-        history.pushState({ hrmWorkoutGuard: true }, '');
+        history.pushState({ workoutGuard: true }, '');
+        backGuardArmed = true;
         workoutHistoryStatePushed = true;
+    }
+
+    function resetBackButtonGuard() {
+        backGuardArmed = false;
+        allowBackExit = false;
+        confirmDialogOpen = false;
+        workoutHistoryStatePushed = Boolean(history.state && history.state.workoutGuard);
     }
 
     function showWorkoutConfirmModal() {
@@ -396,6 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
         hideWorkoutConfirmModal();
         workoutEndPromptResolver = null;
         workoutEndPromptPromise = null;
+        resetBackButtonGuard();
         updateStatus('Disconnected', false);
         setCardStatus('Waiting');
         setNoHeartRateState();
@@ -408,7 +441,6 @@ document.addEventListener('DOMContentLoaded', () => {
         heartRateCharacteristic = null;
         bluetoothDevice = null;
         disconnectInProgress = false;
-        workoutHistoryStatePushed = Boolean(history.state && history.state.hrmWorkoutGuard);
     }
 
     function onDisconnected() {
@@ -991,7 +1023,7 @@ document.addEventListener('DOMContentLoaded', () => {
         zonePercentEls[45].textContent = '0%';
         syncZoneTimerState(0);
 
-        ensureWorkoutHistoryState();
+        armBackButtonGuard();
         timerInterval = setInterval(() => {
             if (!sessionStart) return;
             const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
