@@ -696,22 +696,6 @@ body {
     will-change: left, top, transform;
 }
 
-.hr-history-axis {
-    position: relative;
-    height: 1rem;
-    padding-inline: 8px;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 0.64rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    line-height: 1;
-    color: rgba(255, 255, 255, 0.42);
-    font-variant-numeric: tabular-nums;
-    user-select: none;
-    pointer-events: none;
-    visibility: hidden;
-}
-
 .zone-summary-panel {
     width: 100%;
     padding: 0.82rem;
@@ -922,6 +906,52 @@ body {
     }
 }
 
+@media (orientation: portrait) {
+    body {
+        min-height: 100dvh;
+        overflow: hidden;
+    }
+
+    .app-container {
+        min-height: 100dvh;
+        height: 100dvh;
+        overflow: hidden;
+    }
+
+    .dashboard {
+        height: 100%;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .workout-layout {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .workout-left,
+    .workout-right,
+    .gauge-shell,
+    .zone-gauge {
+        min-height: 0;
+        height: 100%;
+    }
+
+    .hr-history-panel {
+        flex: 1 1 0;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .hr-history-stage {
+        flex: 1 1 0;
+        min-height: 0;
+        height: 100%;
+        overflow: hidden;
+    }
+}
+
 @media (orientation: landscape) {
     :root {
         --page-background:
@@ -1063,14 +1093,6 @@ body {
     .hr-history-stage {
         min-height: 0;
         height: 100%;
-    }
-
-    .hr-history-axis {
-        height: 0;
-        min-height: 0;
-        padding: 0;
-        overflow: hidden;
-        font-size: 0;
     }
 
     .zone-summary-panel {
