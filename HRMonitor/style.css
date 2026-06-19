@@ -12,13 +12,44 @@
     --app-background:
         radial-gradient(circle at 50% 0%, rgba(var(--current-zone-color-rgb, 74, 85, 104), 0.15) 0%, transparent 60%);
     
-    /* Zone Colors (Neon/Vibrant) */
+    /* Zone Colors (Shared palette across chart, gauge, and timers) */
     --zone-0: #4a5568; /* Disconnected/Idle */
-    --zone-1: #00d2ff; /* Very Light (Blue) */
-    --zone-2: #00e676; /* Light (Green) */
-    --zone-3: #ffea00; /* Moderate (Yellow) */
-    --zone-4: #ff1744; /* Hard (Red) */
-    --zone-5: #ff1744; /* Maximum (Red) */
+    --zone-1: #00d2ff; /* Z1 Blue */
+    --zone-2: #00e676; /* Z2 Green */
+    --zone-3: #ffea00; /* Z3 Yellow */
+    --zone-4: #ff1744; /* Z4+ Red */
+    --zone-5: #ff1744; /* Z4+ Red */
+
+    --zone-1-rgb: 0, 210, 255;
+    --zone-2-rgb: 0, 230, 118;
+    --zone-3-rgb: 255, 234, 0;
+    --zone-4-rgb: 255, 23, 68;
+    --zone-5-rgb: 255, 23, 68;
+
+    --zone-1-bg: rgba(var(--zone-1-rgb), 0.16);
+    --zone-2-bg: rgba(var(--zone-2-rgb), 0.16);
+    --zone-3-bg: rgba(var(--zone-3-rgb), 0.16);
+    --zone-4-bg: rgba(var(--zone-4-rgb), 0.18);
+
+    --zone-1-bg-muted: rgba(var(--zone-1-rgb), 0.12);
+    --zone-2-bg-muted: rgba(var(--zone-2-rgb), 0.12);
+    --zone-3-bg-muted: rgba(var(--zone-3-rgb), 0.12);
+    --zone-4-bg-muted: rgba(var(--zone-4-rgb), 0.14);
+
+    --zone-1-bg-active: rgba(var(--zone-1-rgb), 0.30);
+    --zone-2-bg-active: rgba(var(--zone-2-rgb), 0.30);
+    --zone-3-bg-active: rgba(var(--zone-3-rgb), 0.30);
+    --zone-4-bg-active: rgba(var(--zone-4-rgb), 0.34);
+
+    --zone-1-border: rgba(var(--zone-1-rgb), 0.18);
+    --zone-2-border: rgba(var(--zone-2-rgb), 0.18);
+    --zone-3-border: rgba(var(--zone-3-rgb), 0.16);
+    --zone-4-border: rgba(var(--zone-4-rgb), 0.18);
+
+    --zone-1-border-active: rgba(var(--zone-1-rgb), 0.38);
+    --zone-2-border-active: rgba(var(--zone-2-rgb), 0.38);
+    --zone-3-border-active: rgba(var(--zone-3-rgb), 0.34);
+    --zone-4-border-active: rgba(var(--zone-4-rgb), 0.40);
 
     /* Active State Color (Transitions during app runtime) */
     --current-zone-color: var(--zone-0);
@@ -336,8 +367,8 @@ body {
     border-radius: 28px;
     overflow: hidden;
     background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
-        rgba(255, 255, 255, 0.04);
+        linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+        rgba(9, 12, 18, 0.14);
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.08),
@@ -429,22 +460,22 @@ body {
 
 .zone-1 {
     flex-basis: 15%;
-    background: linear-gradient(180deg, rgba(0, 210, 255, 0.16), rgba(0, 210, 255, 0.08));
+    background: linear-gradient(180deg, var(--zone-1-bg), rgba(var(--zone-1-rgb), 0.08));
 }
 
 .zone-2 {
     flex-basis: 50%;
-    background: linear-gradient(180deg, rgba(0, 230, 118, 0.16), rgba(0, 230, 118, 0.08));
+    background: linear-gradient(180deg, var(--zone-2-bg), rgba(var(--zone-2-rgb), 0.08));
 }
 
 .zone-3 {
     flex-basis: 20%;
-    background: linear-gradient(180deg, rgba(255, 234, 0, 0.16), rgba(255, 234, 0, 0.08));
+    background: linear-gradient(180deg, var(--zone-3-bg), rgba(var(--zone-3-rgb), 0.08));
 }
 
 .zone-45 {
     flex-basis: 15%;
-    background: linear-gradient(180deg, rgba(255, 23, 68, 0.18), rgba(255, 23, 68, 0.08));
+    background: linear-gradient(180deg, var(--zone-4-bg), rgba(var(--zone-4-rgb), 0.08));
 }
 
 .zone-progress-segment::before {
@@ -456,8 +487,8 @@ body {
 }
 
 .zone-progress-bar[data-active-zone="none"] .zone-progress-segment {
-    opacity: 0.9;
-    filter: saturate(0.5) brightness(0.66);
+    opacity: 0.95;
+    filter: saturate(0.92) brightness(0.92);
 }
 
 .zone-progress-bar[data-active-zone="1"] .zone-2,
@@ -474,28 +505,28 @@ body {
 .zone-progress-bar[data-active-zone="4"] .zone-45,
 .zone-progress-bar[data-active-zone="5"] .zone-45 {
     opacity: 1;
-    filter: saturate(1.18) brightness(1.12);
+    filter: saturate(1.12) brightness(1.08);
 }
 
 .zone-progress-bar[data-active-zone="1"] .zone-1 {
-    background: linear-gradient(180deg, rgba(0, 210, 255, 0.34), rgba(0, 210, 255, 0.18));
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16), 0 0 18px rgba(0, 210, 255, 0.22);
+    background: linear-gradient(180deg, var(--zone-1-bg-active), rgba(var(--zone-1-rgb), 0.18));
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 0 18px rgba(var(--zone-1-rgb), 0.18);
 }
 
 .zone-progress-bar[data-active-zone="2"] .zone-2 {
-    background: linear-gradient(180deg, rgba(0, 230, 118, 0.34), rgba(0, 230, 118, 0.18));
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16), 0 0 18px rgba(0, 230, 118, 0.22);
+    background: linear-gradient(180deg, var(--zone-2-bg-active), rgba(var(--zone-2-rgb), 0.18));
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 0 18px rgba(var(--zone-2-rgb), 0.18);
 }
 
 .zone-progress-bar[data-active-zone="3"] .zone-3 {
-    background: linear-gradient(180deg, rgba(255, 234, 0, 0.34), rgba(255, 234, 0, 0.18));
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 0 18px rgba(255, 234, 0, 0.2);
+    background: linear-gradient(180deg, var(--zone-3-bg-active), rgba(var(--zone-3-rgb), 0.18));
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 0 18px rgba(var(--zone-3-rgb), 0.18);
 }
 
 .zone-progress-bar[data-active-zone="4"] .zone-45,
 .zone-progress-bar[data-active-zone="5"] .zone-45 {
-    background: linear-gradient(180deg, rgba(255, 23, 68, 0.38), rgba(255, 23, 68, 0.18));
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 0 18px rgba(255, 23, 68, 0.28);
+    background: linear-gradient(180deg, var(--zone-4-bg-active), rgba(var(--zone-4-rgb), 0.18));
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 0 18px rgba(var(--zone-4-rgb), 0.24);
 }
 
 .zone-progress-bar[data-active-zone="none"] .zone-1,
@@ -704,8 +735,8 @@ body {
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.05),
         0 10px 20px rgba(0, 0, 0, 0.2);
-    opacity: 0.62;
-    filter: saturate(0.7) brightness(0.84);
+    opacity: 0.78;
+    filter: saturate(0.92) brightness(0.94);
     transition: opacity 0.32s ease, filter 0.32s ease, transform 0.32s ease, box-shadow 0.32s ease, background 0.32s ease;
     position: relative;
     overflow: visible;
@@ -724,19 +755,23 @@ body {
 }
 
 .zone-timer-1 {
-    background: linear-gradient(135deg, rgba(0, 210, 255, 0.16), rgba(7, 25, 38, 0.58));
+    background: linear-gradient(135deg, var(--zone-1-bg-muted), rgba(7, 25, 38, 0.50));
+    border-color: var(--zone-1-border);
 }
 
 .zone-timer-2 {
-    background: linear-gradient(135deg, rgba(0, 230, 118, 0.16), rgba(7, 36, 20, 0.58));
+    background: linear-gradient(135deg, var(--zone-2-bg-muted), rgba(7, 36, 20, 0.50));
+    border-color: var(--zone-2-border);
 }
 
 .zone-timer-3 {
-    background: linear-gradient(135deg, rgba(255, 234, 0, 0.16), rgba(42, 36, 7, 0.58));
+    background: linear-gradient(135deg, var(--zone-3-bg-muted), rgba(42, 36, 7, 0.50));
+    border-color: var(--zone-3-border);
 }
 
 .zone-timer-45 {
-    background: linear-gradient(135deg, rgba(255, 23, 68, 0.18), rgba(43, 10, 15, 0.58));
+    background: linear-gradient(135deg, var(--zone-4-bg-muted), rgba(43, 10, 15, 0.50));
+    border-color: var(--zone-4-border);
 }
 
 .zone-timer-item .zt-time {
@@ -773,8 +808,8 @@ body {
 }
 
 .zone-timers[data-active-zone="none"] .zone-timer-item {
-    opacity: 0.5;
-    filter: saturate(0.48) brightness(0.78);
+    opacity: 0.72;
+    filter: saturate(0.82) brightness(0.9);
 }
 
 .zone-timers[data-active-zone="1"] .zone-timer-1,
@@ -782,7 +817,7 @@ body {
 .zone-timers[data-active-zone="3"] .zone-timer-3,
 .zone-timers[data-active-zone="45"] .zone-timer-45 {
     opacity: 1;
-    filter: saturate(1.25) brightness(1.18);
+    filter: saturate(1.15) brightness(1.08);
     transform: translateY(-1px);
     z-index: 2;
 }
@@ -796,39 +831,39 @@ body {
 }
 
 .zone-timers[data-active-zone="45"] .zone-timer-45 {
-    border: 1px solid rgba(255, 23, 68, 0.35);
-    background: linear-gradient(135deg, rgba(255, 23, 68, 0.28), rgba(43, 10, 15, 0.72));
+    border: 1px solid var(--zone-4-border-active);
+    background: linear-gradient(135deg, var(--zone-4-bg-active), rgba(43, 10, 15, 0.72));
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.14),
-        0 0 12px rgba(255, 23, 68, 0.25),
-        0 0 24px rgba(255, 23, 68, 0.15);
+        0 0 12px rgba(var(--zone-4-rgb), 0.20),
+        0 0 24px rgba(var(--zone-4-rgb), 0.12);
 }
 
 .zone-timers[data-active-zone="3"] .zone-timer-3 {
-    border: 1px solid rgba(255, 234, 0, 0.35);
-    background: linear-gradient(135deg, rgba(255, 234, 0, 0.24), rgba(42, 36, 7, 0.72));
+    border: 1px solid var(--zone-3-border-active);
+    background: linear-gradient(135deg, var(--zone-3-bg-active), rgba(42, 36, 7, 0.72));
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.14),
-        0 0 12px rgba(255, 234, 0, 0.25),
-        0 0 24px rgba(255, 234, 0, 0.15);
+        0 0 12px rgba(var(--zone-3-rgb), 0.20),
+        0 0 24px rgba(var(--zone-3-rgb), 0.12);
 }
 
 .zone-timers[data-active-zone="2"] .zone-timer-2 {
-    border: 1px solid rgba(0, 230, 118, 0.35);
-    background: linear-gradient(135deg, rgba(0, 230, 118, 0.26), rgba(7, 36, 20, 0.72));
+    border: 1px solid var(--zone-2-border-active);
+    background: linear-gradient(135deg, var(--zone-2-bg-active), rgba(7, 36, 20, 0.72));
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.14),
-        0 0 12px rgba(0, 230, 118, 0.25),
-        0 0 24px rgba(0, 230, 118, 0.15);
+        0 0 12px rgba(var(--zone-2-rgb), 0.20),
+        0 0 24px rgba(var(--zone-2-rgb), 0.12);
 }
 
 .zone-timers[data-active-zone="1"] .zone-timer-1 {
-    border: 1px solid rgba(0, 210, 255, 0.35);
-    background: linear-gradient(135deg, rgba(0, 210, 255, 0.26), rgba(7, 25, 38, 0.72));
+    border: 1px solid var(--zone-1-border-active);
+    background: linear-gradient(135deg, var(--zone-1-bg-active), rgba(7, 25, 38, 0.72));
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.14),
-        0 0 12px rgba(0, 210, 255, 0.25),
-        0 0 24px rgba(0, 210, 255, 0.15);
+        0 0 12px rgba(var(--zone-1-rgb), 0.20),
+        0 0 24px rgba(var(--zone-1-rgb), 0.12);
 }
 
 @media (max-width: 380px) {
