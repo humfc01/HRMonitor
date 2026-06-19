@@ -72,7 +72,7 @@
     --progress-fill-rgb: 74, 85, 104;
     --bpm-value-color: rgba(255, 255, 255, 0.92);
     --bpm-font-size: 74px;
-    --time-section-font-size: 18px;
+    --time-section-font-size: 24px;
     --time-section-letter-spacing: 0.08em;
     --zone-timer-time-size: 18px;
     --zone-timer-percent-size: calc(var(--zone-timer-time-size) / 1.5);
