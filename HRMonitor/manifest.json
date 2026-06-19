@@ -1,0 +1,17 @@
+{
+  "name": "HR Monitor PRO",
+  "short_name": "HR Monitor",
+  "description": "Real-time Web Bluetooth Heart Rate Monitor",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f111a",
+  "theme_color": "#0f111a",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

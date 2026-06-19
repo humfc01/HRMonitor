@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>HR Monitor PRO</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f111a">
+    <!-- Use Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Outfit:wght@300;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container" id="app">
+        <!-- Header -->
+        <header class="header">
+            <button id="connectBtn" class="primary-btn header-connect-btn" type="button">Connect HR Device</button>
+            <button id="settingsBtn" class="icon-btn" aria-label="Settings">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                </svg>
+            </button>
+        </header>
+
+        <!-- Main Display -->
+        <main class="dashboard">
+            <div class="device-status">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">Ready to connect</span>
+            </div>
+
+            <!-- Workout Layout -->
+            <div class="workout-layout glass-panel">
+                <section class="workout-left">
+                    <div class="session-timer">
+                        <span class="timer-label">TIME</span>
+                        <span class="timer-value" id="sessionTimer">00:00</span>
+                    </div>
+
+                    <div class="hr-display">
+                        <div class="pulsing-circles" id="pulseBg">
+                            <div class="circle circle-1"></div>
+                            <div class="circle circle-2"></div>
+                            <div class="circle circle-3"></div>
+                        </div>
+
+                        <div class="hr-content">
+                            <div class="bpm-main">
+                                <svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+                                    </path>
+                                </svg>
+                                <div class="bpm-value" id="bpmValue">--</div>
+                                <span class="bpm-label">BPM</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="hr-history-panel">
+                        <div class="hr-history-stage">
+                            <canvas id="hrHistoryCanvas" aria-label="Heart rate history graph"></canvas>
+                            <div class="hr-history-current-point" id="hrHistoryCurrentPoint" aria-hidden="true">
+                                <div class="hr-history-current-line" id="hrHistoryCurrentLine"></div>
+                                <div class="hr-history-current-dot" id="hrHistoryCurrentDot"></div>
+                            </div>
+                        </div>
+                        <div class="hr-history-axis" aria-hidden="true">
+                            <span class="hr-history-axis-label" style="left: 16.6667%;">10</span>
+                            <span class="hr-history-axis-label" style="left: 33.3333%;">20</span>
+                            <span class="hr-history-axis-label" style="left: 50%;">30</span>
+                            <span class="hr-history-axis-label" style="left: 66.6667%;">40</span>
+                            <span class="hr-history-axis-label" style="left: 83.3333%;">50</span>
+                        </div>
+                    </div>
+                </section>
+
+                <aside class="workout-right" aria-label="Heart rate zone progress">
+                    <div class="gauge-shell">
+                        <div class="zone-gauge">
+                            <div class="zone-progress-wrap">
+                                <div class="zone-progress-bar" id="zoneProgressBar" data-active-zone="none">
+                                    <div class="zone-progress-track">
+                                        <div class="zone-progress-fill" id="zoneProgressFill" aria-hidden="true"></div>
+                                        <div class="zone-progress-segment zone-1" data-zone="1">
+                                            <div class="zone-progress-label">
+                                                <span class="gauge-range-value" id="zone1Max">0</span>
+                                            </div>
+                                        </div>
+                                        <div class="zone-progress-segment zone-2" data-zone="2">
+                                            <div class="zone-progress-label">
+                                                <span class="gauge-range-value" id="zone2Max">0</span>
+                                            </div>
+                                        </div>
+                                        <div class="zone-progress-segment zone-3" data-zone="3">
+                                            <div class="zone-progress-label">
+                                                <span class="gauge-range-value" id="zone3Max">0</span>
+                                            </div>
+                                        </div>
+                                        <div class="zone-progress-segment zone-45" data-zone="4">
+                                            <div class="zone-progress-label">
+                                                <span class="gauge-range-value" id="zone45Max">0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+            <div class="hidden" aria-hidden="true">
+                <span id="bpmStatusText">Waiting</span>
+                <span id="mhrDisplay">Max: 190</span>
+            </div>
+
+            <section class="zone-summary-panel glass-panel" aria-label="Zone time summary">
+                <div class="zone-timers" id="zoneTimers" data-active-zone="none">
+                    <div class="zone-timer-item zone-timer-1" data-zone="1">
+                        <span class="zt-time" id="zone1Timer">00:00</span>
+                        <span class="zt-percent" id="zone1Percent">0%</span>
+                    </div>
+                    <div class="zone-timer-item zone-timer-2" data-zone="2">
+                        <span class="zt-time" id="zone2Timer">00:00</span>
+                        <span class="zt-percent" id="zone2Percent">0%</span>
+                    </div>
+                    <div class="zone-timer-item zone-timer-3" data-zone="3">
+                        <span class="zt-time" id="zone3Timer">00:00</span>
+                        <span class="zt-percent" id="zone3Percent">0%</span>
+                    </div>
+                    <div class="zone-timer-item zone-timer-45" data-zone="45">
+                        <span class="zt-time" id="zone45Timer">00:00</span>
+                        <span class="zt-percent" id="zone45Percent">0%</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal hidden">
+            <div class="modal-content glass-panel">
+                <div class="modal-header">
+                    <h2>Settings</h2>
+                    <button id="closeSettingsBtn" class="icon-btn">&times;</button>
+                </div>
+                <div class="form-group">
+                    <label for="ageInput">Your Age (for Max HR)</label>
+                    <input type="number" id="ageInput" value="36" min="10" max="100">
+                </div>
+                <div class="form-group">
+                    <label for="customMhrInput">Custom Max Heart Rate</label>
+                    <input type="number" id="customMhrInput" placeholder="Calculated automatically">
+                    <small class="hint">Overrides age calculation if set.</small>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveSettingsBtn" class="primary-btn sm-btn">Save Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Workout End Confirmation Modal -->
+        <div id="workoutConfirmModal" class="modal hidden" aria-hidden="true">
+            <div class="modal-content glass-panel workout-confirm-card" role="dialog" aria-modal="true" aria-labelledby="workoutConfirmTitle" aria-describedby="workoutConfirmMessage">
+                <div class="modal-header">
+                    <h2 id="workoutConfirmTitle">End workout?</h2>
+                </div>
+                <p id="workoutConfirmMessage" class="workout-confirm-message">
+                    Disconnect from the heart rate monitor and stop this session?
+                </p>
+                <div class="modal-footer confirm-actions">
+                    <button id="cancelWorkoutEndBtn" class="secondary-btn sm-btn" type="button">Cancel</button>
+                    <button id="confirmWorkoutEndBtn" class="primary-btn sm-btn danger-btn" type="button">Disconnect</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
