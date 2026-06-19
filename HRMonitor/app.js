@@ -1009,13 +1009,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function drawHrHistoryTimeLabels(ctx, left, top, width, height) {
         const markerMinutes = [10, 20, 30, 40, 50];
-        const labelBottomY = top + (1 - (mapHeartRateToBarPosition(81) / 100)) * height;
+        const redZoneTopY = top + (1 - (mapHeartRateToBarPosition(100) / 100)) * height;
+        const redZoneBottomY = top + (1 - (mapHeartRateToBarPosition(80) / 100)) * height;
+        const labelCenterY = redZoneTopY + ((redZoneBottomY - redZoneTopY) / 2);
         const fontSize = Math.max(8, Math.round(9 * hrHistoryDpr));
 
         ctx.save();
         ctx.font = `700 ${fontSize}px 'Montserrat', sans-serif`;
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
+        ctx.textBaseline = 'middle';
         ctx.fillStyle = 'rgba(255, 255, 255, 0.90)';
         ctx.shadowColor = 'rgba(0, 0, 0, 0.72)';
         ctx.shadowBlur = Math.max(2, 2 * hrHistoryDpr);
@@ -1023,7 +1025,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         markerMinutes.forEach(minute => {
             const x = getHrHistoryTimeMarkerX(left, width, minute);
-            ctx.fillText(String(minute), x, labelBottomY);
+            ctx.fillText(String(minute), x, labelCenterY);
         });
 
         ctx.restore();
