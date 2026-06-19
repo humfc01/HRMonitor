@@ -81,6 +81,22 @@ document.addEventListener('DOMContentLoaded', () => {
         5: '255, 23, 68'
     };
 
+    const ZONE_BAND_FILL = {
+        1: 'rgba(0, 210, 255, 0.065)',
+        2: 'rgba(0, 230, 118, 0.065)',
+        3: 'rgba(255, 234, 0, 0.065)',
+        4: 'rgba(255, 23, 68, 0.065)',
+        5: 'rgba(255, 23, 68, 0.065)'
+    };
+
+    const ZONE_AREA_FILL = {
+        1: 'rgba(0, 210, 255, 0.40)',
+        2: 'rgba(0, 230, 118, 0.42)',
+        3: 'rgba(255, 234, 0, 0.44)',
+        4: 'rgba(255, 23, 68, 0.46)',
+        5: 'rgba(255, 23, 68, 0.46)'
+    };
+
     // Bluetooth Service UUIDs (Standard)
     const HR_SERVICE = 'heart_rate';
     const HR_MEASUREMENT = 'heart_rate_measurement';
@@ -114,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setConnectButtonLabel('Connect HR Device');
     updateMhrDisplay();
     updateZoneProgressLabels();
+    applyZoneBandVariables();
     if (appVersion) {
         appVersion.textContent = `v${APP_VERSION}`;
     }
@@ -910,26 +927,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getZoneAreaFillColor(zoneId) {
-        switch (zoneId) {
-            case 2:
-                return 'rgba(0, 230, 118, 0.42)';
-            case 3:
-                return 'rgba(255, 234, 0, 0.44)';
-            case 4:
-            case 5:
-                return 'rgba(255, 23, 68, 0.46)';
-            case 1:
-            default:
-                return 'rgba(0, 210, 255, 0.40)';
-        }
+        return ZONE_AREA_FILL[zoneId] || ZONE_AREA_FILL[1];
     }
 
     function drawHrBackground(ctx, left, top, width, height) {
         const bands = [
-            { hrMin: 0, hrMax: 60, color: 'rgba(0, 210, 255, 0.065)' },
-            { hrMin: 60, hrMax: 70, color: 'rgba(0, 230, 118, 0.065)' },
-            { hrMin: 70, hrMax: 80, color: 'rgba(255, 234, 0, 0.065)' },
-            { hrMin: 80, hrMax: 100, color: 'rgba(255, 23, 68, 0.065)' }
+            { hrMin: 0, hrMax: 60, color: ZONE_BAND_FILL[1] },
+            { hrMin: 60, hrMax: 70, color: ZONE_BAND_FILL[2] },
+            { hrMin: 70, hrMax: 80, color: ZONE_BAND_FILL[3] },
+            { hrMin: 80, hrMax: 100, color: ZONE_BAND_FILL[4] }
         ];
 
         ctx.save();
@@ -971,6 +977,14 @@ document.addEventListener('DOMContentLoaded', () => {
             default:
                 return 'rgba(0, 210, 255, 0.95)';
         }
+    }
+
+    function applyZoneBandVariables() {
+        const root = document.documentElement;
+        root.style.setProperty('--chart-zone-1-band', ZONE_BAND_FILL[1]);
+        root.style.setProperty('--chart-zone-2-band', ZONE_BAND_FILL[2]);
+        root.style.setProperty('--chart-zone-3-band', ZONE_BAND_FILL[3]);
+        root.style.setProperty('--chart-zone-4-band', ZONE_BAND_FILL[4]);
     }
 
     // ---- Timer Logic ----

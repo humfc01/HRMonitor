@@ -31,6 +31,12 @@
     --zone-3-bg: rgba(var(--zone-3-rgb), 0.16);
     --zone-4-bg: rgba(var(--zone-4-rgb), 0.18);
 
+    /* Exact HR chart band fills */
+    --chart-zone-1-band: rgba(var(--zone-1-rgb), 0.065);
+    --chart-zone-2-band: rgba(var(--zone-2-rgb), 0.065);
+    --chart-zone-3-band: rgba(var(--zone-3-rgb), 0.065);
+    --chart-zone-4-band: rgba(var(--zone-4-rgb), 0.065);
+
     --zone-1-bg-muted: rgba(var(--zone-1-rgb), 0.12);
     --zone-2-bg-muted: rgba(var(--zone-2-rgb), 0.12);
     --zone-3-bg-muted: rgba(var(--zone-3-rgb), 0.12);
@@ -60,7 +66,7 @@
     --time-section-font-size: 22px;
     --time-section-letter-spacing: 0.08em;
     --zone-timer-time-size: 20px;
-    --zone-timer-percent-size: calc(var(--zone-timer-time-size) * 0.5);
+    --zone-timer-percent-size: calc(var(--zone-timer-time-size) / 1.5);
     --gauge-range-size: 16px;
 }
 
@@ -366,13 +372,9 @@ body {
     min-height: 0;
     border-radius: 28px;
     overflow: hidden;
-    background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
-        rgba(9, 12, 18, 0.14);
+    background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.08),
-        0 16px 30px rgba(0, 0, 0, 0.22);
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.22);
 }
 
 .zone-progress-fill {
@@ -460,80 +462,35 @@ body {
 
 .zone-1 {
     flex-basis: 15%;
-    background: linear-gradient(180deg, var(--zone-1-bg), rgba(var(--zone-1-rgb), 0.08));
+    background-color: var(--chart-zone-1-band);
+    background-image: none;
 }
 
 .zone-2 {
     flex-basis: 50%;
-    background: linear-gradient(180deg, var(--zone-2-bg), rgba(var(--zone-2-rgb), 0.08));
+    background-color: var(--chart-zone-2-band);
+    background-image: none;
 }
 
 .zone-3 {
     flex-basis: 20%;
-    background: linear-gradient(180deg, var(--zone-3-bg), rgba(var(--zone-3-rgb), 0.08));
+    background-color: var(--chart-zone-3-band);
+    background-image: none;
 }
 
 .zone-45 {
     flex-basis: 15%;
-    background: linear-gradient(180deg, var(--zone-4-bg), rgba(var(--zone-4-rgb), 0.08));
+    background-color: var(--chart-zone-4-band);
+    background-image: none;
 }
 
 .zone-progress-segment::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    pointer-events: none;
+    content: none;
 }
 
 .zone-progress-bar[data-active-zone="none"] .zone-progress-segment {
-    opacity: 0.95;
-    filter: saturate(0.92) brightness(0.92);
-}
-
-.zone-progress-bar[data-active-zone="1"] .zone-2,
-.zone-progress-bar[data-active-zone="3"] .zone-2,
-.zone-progress-bar[data-active-zone="4"] .zone-2,
-.zone-progress-bar[data-active-zone="5"] .zone-2 {
-    opacity: 0.82;
-    filter: saturate(0.82) brightness(0.92);
-}
-
-.zone-progress-bar[data-active-zone="1"] .zone-1,
-.zone-progress-bar[data-active-zone="2"] .zone-2,
-.zone-progress-bar[data-active-zone="3"] .zone-3,
-.zone-progress-bar[data-active-zone="4"] .zone-45,
-.zone-progress-bar[data-active-zone="5"] .zone-45 {
     opacity: 1;
-    filter: saturate(1.12) brightness(1.08);
-}
-
-.zone-progress-bar[data-active-zone="1"] .zone-1 {
-    background: linear-gradient(180deg, var(--zone-1-bg-active), rgba(var(--zone-1-rgb), 0.18));
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 0 18px rgba(var(--zone-1-rgb), 0.18);
-}
-
-.zone-progress-bar[data-active-zone="2"] .zone-2 {
-    background: linear-gradient(180deg, var(--zone-2-bg-active), rgba(var(--zone-2-rgb), 0.18));
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 0 18px rgba(var(--zone-2-rgb), 0.18);
-}
-
-.zone-progress-bar[data-active-zone="3"] .zone-3 {
-    background: linear-gradient(180deg, var(--zone-3-bg-active), rgba(var(--zone-3-rgb), 0.18));
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 0 18px rgba(var(--zone-3-rgb), 0.18);
-}
-
-.zone-progress-bar[data-active-zone="4"] .zone-45,
-.zone-progress-bar[data-active-zone="5"] .zone-45 {
-    background: linear-gradient(180deg, var(--zone-4-bg-active), rgba(var(--zone-4-rgb), 0.18));
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 0 18px rgba(var(--zone-4-rgb), 0.24);
-}
-
-.zone-progress-bar[data-active-zone="none"] .zone-1,
-.zone-progress-bar[data-active-zone="none"] .zone-2,
-.zone-progress-bar[data-active-zone="none"] .zone-3,
-.zone-progress-bar[data-active-zone="none"] .zone-45 {
-    box-shadow: none;
+    filter: none;
 }
 
 /* Connection Status */
@@ -735,8 +692,6 @@ body {
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.05),
         0 10px 20px rgba(0, 0, 0, 0.2);
-    opacity: 0.78;
-    filter: saturate(0.92) brightness(0.94);
     transition: opacity 0.32s ease, filter 0.32s ease, transform 0.32s ease, box-shadow 0.32s ease, background 0.32s ease;
     position: relative;
     overflow: visible;
@@ -745,33 +700,27 @@ body {
 }
 
 .zone-timer-item::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 45%);
-    opacity: 0.35;
+    content: none;
 }
 
 .zone-timer-1 {
-    background: linear-gradient(135deg, var(--zone-1-bg-muted), rgba(7, 25, 38, 0.50));
-    border-color: var(--zone-1-border);
+    background-color: var(--chart-zone-1-band);
+    background-image: none;
 }
 
 .zone-timer-2 {
-    background: linear-gradient(135deg, var(--zone-2-bg-muted), rgba(7, 36, 20, 0.50));
-    border-color: var(--zone-2-border);
+    background-color: var(--chart-zone-2-band);
+    background-image: none;
 }
 
 .zone-timer-3 {
-    background: linear-gradient(135deg, var(--zone-3-bg-muted), rgba(42, 36, 7, 0.50));
-    border-color: var(--zone-3-border);
+    background-color: var(--chart-zone-3-band);
+    background-image: none;
 }
 
 .zone-timer-45 {
-    background: linear-gradient(135deg, var(--zone-4-bg-muted), rgba(43, 10, 15, 0.50));
-    border-color: var(--zone-4-border);
+    background-color: var(--chart-zone-4-band);
+    background-image: none;
 }
 
 .zone-timer-item .zt-time {
@@ -782,12 +731,12 @@ body {
     font-family: 'Montserrat', sans-serif;
     font-size: var(--zone-timer-time-size);
     font-weight: 800;
-    color: var(--text-primary);
+    color: rgba(255, 255, 255, 0.82);
     letter-spacing: 0.02em;
     line-height: 0.96;
     font-variant-numeric: tabular-nums;
     text-align: center;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.56);
     white-space: nowrap;
 }
 
@@ -800,16 +749,18 @@ body {
     font-family: 'Montserrat', sans-serif;
     font-size: var(--zone-timer-percent-size);
     font-weight: 650;
-    color: rgba(255, 255, 255, 0.68);
+    color: rgba(255, 255, 255, 0.82);
     letter-spacing: 0.03em;
     line-height: 0.98;
     text-align: center;
+    opacity: 1;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.56);
     white-space: nowrap;
 }
 
 .zone-timers[data-active-zone="none"] .zone-timer-item {
-    opacity: 0.72;
-    filter: saturate(0.82) brightness(0.9);
+    opacity: 1;
+    filter: none;
 }
 
 .zone-timers[data-active-zone="1"] .zone-timer-1,
@@ -817,7 +768,7 @@ body {
 .zone-timers[data-active-zone="3"] .zone-timer-3,
 .zone-timers[data-active-zone="45"] .zone-timer-45 {
     opacity: 1;
-    filter: saturate(1.15) brightness(1.08);
+    filter: none;
     transform: translateY(-1px);
     z-index: 2;
 }
@@ -825,45 +776,33 @@ body {
 .zone-timers[data-active-zone="1"] .zone-timer-1 .zt-time,
 .zone-timers[data-active-zone="2"] .zone-timer-2 .zt-time,
 .zone-timers[data-active-zone="3"] .zone-timer-3 .zt-time,
-.zone-timers[data-active-zone="45"] .zone-timer-45 .zt-time {
-    color: #ffffff;
-    text-shadow: 0 0 14px rgba(255, 255, 255, 0.14);
+.zone-timers[data-active-zone="45"] .zone-timer-45 .zt-time,
+.zone-timers[data-active-zone="1"] .zone-timer-1 .zt-percent,
+.zone-timers[data-active-zone="2"] .zone-timer-2 .zt-percent,
+.zone-timers[data-active-zone="3"] .zone-timer-3 .zt-percent,
+.zone-timers[data-active-zone="45"] .zone-timer-45 .zt-percent {
+    color: rgba(255, 255, 255, 0.82);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.56);
 }
 
 .zone-timers[data-active-zone="45"] .zone-timer-45 {
-    border: 1px solid var(--zone-4-border-active);
-    background: linear-gradient(135deg, var(--zone-4-bg-active), rgba(43, 10, 15, 0.72));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.14),
-        0 0 12px rgba(var(--zone-4-rgb), 0.20),
-        0 0 24px rgba(var(--zone-4-rgb), 0.12);
+    background-color: var(--chart-zone-4-band);
+    background-image: none;
 }
 
 .zone-timers[data-active-zone="3"] .zone-timer-3 {
-    border: 1px solid var(--zone-3-border-active);
-    background: linear-gradient(135deg, var(--zone-3-bg-active), rgba(42, 36, 7, 0.72));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.14),
-        0 0 12px rgba(var(--zone-3-rgb), 0.20),
-        0 0 24px rgba(var(--zone-3-rgb), 0.12);
+    background-color: var(--chart-zone-3-band);
+    background-image: none;
 }
 
 .zone-timers[data-active-zone="2"] .zone-timer-2 {
-    border: 1px solid var(--zone-2-border-active);
-    background: linear-gradient(135deg, var(--zone-2-bg-active), rgba(7, 36, 20, 0.72));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.14),
-        0 0 12px rgba(var(--zone-2-rgb), 0.20),
-        0 0 24px rgba(var(--zone-2-rgb), 0.12);
+    background-color: var(--chart-zone-2-band);
+    background-image: none;
 }
 
 .zone-timers[data-active-zone="1"] .zone-timer-1 {
-    border: 1px solid var(--zone-1-border-active);
-    background: linear-gradient(135deg, var(--zone-1-bg-active), rgba(7, 25, 38, 0.72));
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.14),
-        0 0 12px rgba(var(--zone-1-rgb), 0.20),
-        0 0 24px rgba(var(--zone-1-rgb), 0.12);
+    background-color: var(--chart-zone-1-band);
+    background-image: none;
 }
 
 @media (max-width: 380px) {
