@@ -917,6 +917,214 @@ body {
     }
 }
 
+@media (orientation: landscape) {
+    html,
+    body {
+        height: 100dvh;
+        overflow: hidden;
+    }
+
+    body {
+        align-items: stretch;
+    }
+
+    .app-container {
+        width: 100%;
+        max-width: 1100px;
+        height: 100dvh;
+        max-height: 100dvh;
+        min-height: 100dvh;
+        padding: calc(6px + env(safe-area-inset-top, 0px)) 10px calc(6px + env(safe-area-inset-bottom, 0px));
+        overflow: hidden;
+    }
+
+    .dashboard {
+        display: grid;
+        grid-template-columns:
+            minmax(180px, 0.9fr)
+            minmax(0, 2fr)
+            90px
+            100px;
+        grid-template-rows: auto minmax(0, 1fr);
+        column-gap: 0.45rem;
+        row-gap: 0.35rem;
+        align-items: stretch;
+        overflow: hidden;
+    }
+
+    .device-status {
+        grid-column: 1 / -1;
+        margin-bottom: 0;
+        font-size: 0.82rem;
+    }
+
+    .workout-layout {
+        grid-column: 1 / 4;
+        grid-row: 2;
+        display: grid;
+        grid-template-columns:
+            minmax(180px, 0.9fr)
+            minmax(0, 2fr)
+            90px;
+        grid-template-rows: auto minmax(0, 1fr);
+        min-height: 0;
+        padding: 0.45rem;
+        column-gap: 0.42rem;
+        row-gap: 0.2rem;
+        overflow: hidden;
+    }
+
+    .workout-left {
+        display: grid;
+        grid-column: 1 / 3;
+        grid-row: 1 / 3;
+        grid-template-columns: minmax(180px, 0.9fr) minmax(0, 2fr);
+        grid-template-rows: auto minmax(0, 1fr);
+        column-gap: 0.42rem;
+        row-gap: 0.16rem;
+        min-height: 0;
+        min-width: 0;
+    }
+
+    .workout-right {
+        grid-column: 3;
+        grid-row: 1 / 3;
+        padding-left: 0.42rem;
+    }
+
+    .glass-panel {
+        border-radius: 20px;
+    }
+
+    .header {
+        gap: 0.4rem;
+        margin-bottom: 0.1rem;
+    }
+
+    .icon-btn {
+        width: 2.2rem;
+        height: 2.2rem;
+    }
+
+    .header-connect-btn {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.88rem;
+    }
+
+    .hr-display {
+        grid-column: 1;
+        grid-row: 2;
+        min-height: clamp(104px, 17vw, 140px);
+        margin: 0;
+    }
+
+    .hr-content {
+        min-height: clamp(104px, 17vw, 140px);
+        padding: 0.12rem 0;
+    }
+
+    .bpm-value {
+        font-size: clamp(3.1rem, 9.5vw, 4.9rem);
+    }
+
+    .session-timer {
+        grid-column: 1;
+        grid-row: 1;
+        margin: 0;
+        padding: 0.01rem 0 0.05rem;
+        align-self: start;
+    }
+
+    .timer-label {
+        font-size: 0.86rem;
+        letter-spacing: 0.14em;
+    }
+
+    .timer-value {
+        font-size: 0.94rem;
+        letter-spacing: 0.06em;
+    }
+
+    .hr-history-panel {
+        grid-column: 2;
+        grid-row: 1 / 3;
+        gap: 0.08rem;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .hr-history-stage {
+        min-height: 46px;
+    }
+
+    .hr-history-axis {
+        height: 0.64rem;
+        font-size: 0.48rem;
+    }
+
+    .zone-summary-panel {
+        grid-column: 4;
+        grid-row: 2;
+        display: flex;
+        min-height: 0;
+        height: 100%;
+        padding: 0.42rem;
+        overflow: hidden;
+    }
+
+    .zone-timers {
+        display: flex;
+        flex-direction: column-reverse;
+        gap: 0.18rem;
+        height: 100%;
+        width: 100%;
+        margin-top: 0;
+    }
+
+    .zone-timer-item {
+        flex: 1 1 0;
+        min-height: 0;
+        padding: 0.18rem 0.16rem;
+        border-radius: 12px;
+    }
+
+    .zone-timer-item .zt-time {
+        font-size: clamp(0.66rem, 1.55vw, 0.86rem);
+    }
+
+    .zone-timer-item .zt-percent {
+        margin-top: 0.04rem;
+        font-size: clamp(0.48rem, 1.1vw, 0.68rem);
+    }
+
+    .gauge-shell,
+    .zone-gauge,
+    .zone-progress-wrap,
+    .zone-progress-bar,
+    .zone-progress-track {
+        min-height: 0;
+    }
+
+    .zone-progress-bar,
+    .zone-progress-track {
+        border-radius: 22px;
+    }
+
+    .zone-progress-label {
+        padding: 0.04rem 0.18rem;
+        max-width: calc(100% - 0.2rem);
+    }
+
+    .gauge-range-value {
+        font-size: clamp(0.68rem, 1.45vw, 0.9rem);
+    }
+
+    .zone-summary-panel,
+    .workout-layout {
+        min-height: 0;
+    }
+}
+
 /* Primary Button */
 .primary-btn {
     width: 100%;

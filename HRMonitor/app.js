@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const APP_VERSION = window.APP_VERSION || '1.2.5';
+    const APP_VERSION = window.APP_VERSION || '1.2.6';
 
     // Register Service Worker for PWA Offline Support
     if ('serviceWorker' in navigator) {
