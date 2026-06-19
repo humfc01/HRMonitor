@@ -63,9 +63,9 @@
     --progress-fill-rgb: 74, 85, 104;
     --bpm-value-color: rgba(255, 255, 255, 0.92);
     --bpm-font-size: 74px;
-    --time-section-font-size: 22px;
+    --time-section-font-size: 18px;
     --time-section-letter-spacing: 0.08em;
-    --zone-timer-time-size: 20px;
+    --zone-timer-time-size: 18px;
     --zone-timer-percent-size: calc(var(--zone-timer-time-size) / 1.5);
     --gauge-range-size: 16px;
 }
@@ -772,6 +772,46 @@ body {
     filter: none;
     transform: translateY(-1px);
     z-index: 2;
+}
+
+.zone-timers[data-active-zone="1"] .zone-timer-1 {
+    border-color: var(--zone-1-border-active);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 0 0 0 1px rgba(var(--zone-1-rgb), 0.1),
+        0 0 0 1px rgba(var(--zone-1-rgb), 0.18),
+        0 0 14px rgba(var(--zone-1-rgb), 0.26),
+        0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.zone-timers[data-active-zone="2"] .zone-timer-2 {
+    border-color: var(--zone-2-border-active);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 0 0 0 1px rgba(var(--zone-2-rgb), 0.1),
+        0 0 0 1px rgba(var(--zone-2-rgb), 0.18),
+        0 0 14px rgba(var(--zone-2-rgb), 0.26),
+        0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.zone-timers[data-active-zone="3"] .zone-timer-3 {
+    border-color: var(--zone-3-border-active);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 0 0 0 1px rgba(var(--zone-3-rgb), 0.1),
+        0 0 0 1px rgba(var(--zone-3-rgb), 0.16),
+        0 0 14px rgba(var(--zone-3-rgb), 0.24),
+        0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.zone-timers[data-active-zone="45"] .zone-timer-45 {
+    border-color: var(--zone-4-border-active);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08),
+        inset 0 0 0 1px rgba(var(--zone-4-rgb), 0.1),
+        0 0 0 1px rgba(var(--zone-4-rgb), 0.18),
+        0 0 14px rgba(var(--zone-4-rgb), 0.28),
+        0 10px 20px rgba(0, 0, 0, 0.2);
 }
 
 .zone-timers[data-active-zone="1"] .zone-timer-1 .zt-time,
