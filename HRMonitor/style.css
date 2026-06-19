@@ -394,6 +394,8 @@ body {
     width: 100%;
     height: 0%;
     z-index: 1;
+    overflow: hidden;
+    isolation: isolate;
     border-radius: 0;
     background-color: rgba(var(--progress-fill-rgb, 74, 85, 104), 0.88);
     box-shadow:
@@ -407,10 +409,125 @@ body {
     content: '';
     position: absolute;
     inset: 0;
+    z-index: 2;
     border-radius: inherit;
     background: linear-gradient(90deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05) 42%, rgba(0, 0, 0, 0.1));
     opacity: 0.9;
     pointer-events: none;
+}
+
+.zone-progress-bubbles {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.28s ease;
+}
+
+.zone-progress-bubble {
+    --bubble-left: 50%;
+    --bubble-size: 0.72rem;
+    --bubble-drift: 0rem;
+    --bubble-duration: 6s;
+    --bubble-delay: 0s;
+    position: absolute;
+    left: var(--bubble-left);
+    bottom: -16%;
+    width: var(--bubble-size);
+    height: var(--bubble-size);
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate3d(-50%, 0, 0) scale(0.72);
+    background:
+        radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.34) 0, rgba(255, 255, 255, 0.18) 24%, rgba(var(--active-zone-rgb), 0.16) 52%, rgba(var(--active-zone-rgb), 0) 74%);
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+        0 0 12px rgba(var(--active-zone-rgb), 0.18),
+        0 0 24px rgba(var(--active-zone-rgb), 0.12);
+    animation: progress-bubble-rise var(--bubble-duration) ease-in infinite;
+    animation-delay: var(--bubble-delay);
+    animation-play-state: paused;
+    will-change: transform, opacity;
+}
+
+.bubble-1 {
+    --bubble-left: 12%;
+    --bubble-size: 0.46rem;
+    --bubble-drift: -0.22rem;
+    --bubble-duration: 5.4s;
+    --bubble-delay: -0.8s;
+}
+
+.bubble-2 {
+    --bubble-left: 24%;
+    --bubble-size: 0.7rem;
+    --bubble-drift: 0.26rem;
+    --bubble-duration: 6.3s;
+    --bubble-delay: -3.1s;
+}
+
+.bubble-3 {
+    --bubble-left: 39%;
+    --bubble-size: 0.56rem;
+    --bubble-drift: -0.18rem;
+    --bubble-duration: 4.9s;
+    --bubble-delay: -2.4s;
+}
+
+.bubble-4 {
+    --bubble-left: 52%;
+    --bubble-size: 0.82rem;
+    --bubble-drift: 0.18rem;
+    --bubble-duration: 6.8s;
+    --bubble-delay: -4.2s;
+}
+
+.bubble-5 {
+    --bubble-left: 67%;
+    --bubble-size: 0.5rem;
+    --bubble-drift: -0.28rem;
+    --bubble-duration: 5.7s;
+    --bubble-delay: -1.7s;
+}
+
+.bubble-6 {
+    --bubble-left: 81%;
+    --bubble-size: 0.76rem;
+    --bubble-drift: 0.22rem;
+    --bubble-duration: 6.1s;
+    --bubble-delay: -3.8s;
+}
+
+.bubble-7 {
+    --bubble-left: 91%;
+    --bubble-size: 0.42rem;
+    --bubble-drift: -0.14rem;
+    --bubble-duration: 5.1s;
+    --bubble-delay: -2.1s;
+}
+
+@keyframes progress-bubble-rise {
+    0% {
+        opacity: 0;
+        transform: translate3d(-50%, 0, 0) scale(0.7);
+    }
+
+    14% {
+        opacity: 0.34;
+    }
+
+    55% {
+        opacity: 0.22;
+        transform: translate3d(calc(-50% + (var(--bubble-drift) * 0.7)), -48%, 0) scale(0.92);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate3d(calc(-50% + var(--bubble-drift)), -108%, 0) scale(1.14);
+    }
 }
 
 .zone-progress-separators {
@@ -543,9 +660,35 @@ body {
     background: linear-gradient(90deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.07) 38%, rgba(255, 255, 255, 0.02));
 }
 
+.zone-progress-bar[data-active-zone="1"] .zone-progress-bubbles,
+.zone-progress-bar[data-active-zone="2"] .zone-progress-bubbles,
+.zone-progress-bar[data-active-zone="3"] .zone-progress-bubbles,
+.zone-progress-bar[data-active-zone="45"] .zone-progress-bubbles {
+    opacity: 0.9;
+}
+
+.zone-progress-bar[data-active-zone="1"] .zone-progress-bubble,
+.zone-progress-bar[data-active-zone="2"] .zone-progress-bubble,
+.zone-progress-bar[data-active-zone="3"] .zone-progress-bubble,
+.zone-progress-bar[data-active-zone="45"] .zone-progress-bubble {
+    animation-play-state: running;
+}
+
 .zone-progress-bar[data-active-zone="none"] .zone-progress-segment {
     opacity: 1;
     filter: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .zone-progress-bubbles {
+        opacity: 0;
+        transition: none;
+    }
+
+    .zone-progress-bubble {
+        animation: none;
+        opacity: 0;
+    }
 }
 
 /* Connection Status */
