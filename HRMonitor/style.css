@@ -25,6 +25,17 @@
     --current-zone-color-rgb: 74, 85, 104;
     --progress-fill-rgb: 74, 85, 104;
     --bpm-value-color: rgba(255, 255, 255, 0.92);
+    --bpm-font-size: 74px;
+    --time-section-font-size: 22px;
+    --time-section-letter-spacing: 0.08em;
+    --zone-timer-time-size: 20px;
+    --zone-timer-percent-size: calc(var(--zone-timer-time-size) * 0.5);
+    --gauge-range-size: 16px;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
 
 * {
@@ -202,7 +213,7 @@ body {
 
 .bpm-value {
     font-family: 'Montserrat', sans-serif;
-    font-size: clamp(4.6rem, 18vw, 7.4rem);
+    font-size: var(--bpm-font-size);
     font-weight: 800;
     line-height: 1;
     letter-spacing: 0.04em;
@@ -404,7 +415,7 @@ body {
 
 .gauge-range-value {
     display: block;
-    font-size: clamp(0.98rem, 2.7vw, 1.48rem);
+    font-size: var(--gauge-range-size);
     font-weight: 700;
     line-height: 1;
     letter-spacing: -0.05em;
@@ -535,30 +546,26 @@ body {
 /* Timer Section */
 .session-timer {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 0.75rem;
-    margin: 0.02rem 0 0.45rem;
-    padding: 0.14rem 0 0.28rem;
+    justify-content: flex-end;
+    align-items: flex-start;
+    gap: 0;
+    width: 100%;
+    margin: 0 0 0.28rem;
+    padding: 0.05rem 0 0.12rem;
     border-radius: 0;
     background: transparent;
     border: 0;
     box-shadow: none;
-}
-
-.timer-label {
-    font-size: 1.5rem;
-    color: rgba(255, 255, 255, 0.62);
-    font-weight: 800;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
+    white-space: nowrap;
+    text-align: right;
 }
 
 .timer-value {
     font-family: 'Montserrat', sans-serif;
-    font-size: 1.2rem;
+    font-size: var(--time-section-font-size);
+    color: rgba(255, 255, 255, 0.92);
     font-weight: 800;
-    letter-spacing: 0.08em;
+    letter-spacing: var(--time-section-letter-spacing);
     font-variant-numeric: tabular-nums;
     line-height: 1;
 }
@@ -688,9 +695,10 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0.05rem;
     min-width: 0;
-    min-height: 4.25rem;
-    padding: 0.48rem 0.35rem;
+    min-height: 4.35rem;
+    padding: 0.3rem 0.24rem;
     border-radius: 16px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow:
@@ -734,27 +742,34 @@ body {
 .zone-timer-item .zt-time {
     position: relative;
     z-index: 1;
+    display: block;
+    width: 100%;
     font-family: 'Montserrat', sans-serif;
-    font-size: clamp(1rem, 3.5vw, 1.28rem);
+    font-size: var(--zone-timer-time-size);
     font-weight: 800;
     color: var(--text-primary);
-    letter-spacing: 0.05em;
-    line-height: 1;
+    letter-spacing: 0.02em;
+    line-height: 0.96;
+    font-variant-numeric: tabular-nums;
     text-align: center;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    white-space: nowrap;
 }
 
 .zone-timer-item .zt-percent {
     position: relative;
     z-index: 1;
-    margin-top: 0.16rem;
+    display: block;
+    width: 100%;
+    margin-top: 0;
     font-family: 'Montserrat', sans-serif;
-    font-size: clamp(0.72rem, 2.4vw, 0.88rem);
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.72);
-    letter-spacing: 0.05em;
-    line-height: 1;
+    font-size: var(--zone-timer-percent-size);
+    font-weight: 650;
+    color: rgba(255, 255, 255, 0.68);
+    letter-spacing: 0.03em;
+    line-height: 0.98;
     text-align: center;
+    white-space: nowrap;
 }
 
 .zone-timers[data-active-zone="none"] .zone-timer-item {
@@ -845,26 +860,13 @@ body {
         padding: 0.48rem 0.6rem 0.68rem;
     }
 
-    .bpm-label {
-        font-size: 0.7rem;
-        letter-spacing: 0.22em;
-    }
-
     .session-timer {
-        padding: 0.1rem 0 0.22rem;
+        justify-content: flex-end;
+        align-items: flex-start;
+        gap: 0;
+        padding: 0.03rem 0 0.08rem;
         border-radius: 0;
-        margin-bottom: 0.32rem;
-    }
-
-    .timer-label {
-        font-size: 1.2rem;
-        letter-spacing: 0.14em;
-        font-weight: 800;
-    }
-
-    .timer-value {
-        font-size: 1.5rem;
-        letter-spacing: 0.06em;
+        margin-bottom: 0.24rem;
     }
 
     .hr-content {
@@ -880,22 +882,13 @@ body {
     }
 
     .zone-timers {
-        gap: 0.28rem;
+        gap: 0.24rem;
     }
 
     .zone-timer-item {
-        min-height: 3.85rem;
-        padding: 0.42rem 0.28rem;
+        min-height: 4rem;
+        padding: 0.26rem 0.18rem;
         border-radius: 14px;
-    }
-
-    .zone-timer-item .zt-time {
-        font-size: clamp(0.9rem, 3.9vw, 1.06rem);
-    }
-
-    .zone-timer-item .zt-percent {
-        margin-top: 0.12rem;
-        font-size: clamp(0.66rem, 2.7vw, 0.78rem);
     }
 
     .zone-progress-segment {
@@ -908,10 +901,6 @@ body {
 
     .zone-45 .zone-progress-label {
         top: clamp(0.3rem, 0.9vw, 0.56rem);
-    }
-
-    .gauge-range-value {
-        font-size: clamp(0.9rem, 2.95vw, 1.22rem);
     }
 
     .header-connect-btn {
@@ -1035,26 +1024,14 @@ body {
         padding: 0.12rem 0;
     }
 
-    .bpm-value {
-        font-size: clamp(3.1rem, 9.5vw, 4.9rem);
-    }
-
     .session-timer {
         grid-column: 1;
         grid-row: 1;
         margin: 0;
-        padding: 0.01rem 0 0.05rem;
+        padding: 0.01rem 0 0.03rem;
         align-self: start;
-    }
-
-    .timer-label {
-        font-size: 0.86rem;
-        letter-spacing: 0.14em;
-    }
-
-    .timer-value {
-        font-size: 0.94rem;
-        letter-spacing: 0.06em;
+        justify-content: flex-end;
+        align-items: flex-start;
     }
 
     .hr-history-panel {
@@ -1080,14 +1057,14 @@ body {
         display: flex;
         min-height: 0;
         height: 100%;
-        padding: 0.42rem;
+        padding: 0.3rem;
         overflow: hidden;
     }
 
     .zone-timers {
         display: flex;
         flex-direction: column-reverse;
-        gap: 0.18rem;
+        gap: 0.08rem;
         height: 100%;
         width: 100%;
         margin-top: 0;
@@ -1096,17 +1073,8 @@ body {
     .zone-timer-item {
         flex: 1 1 0;
         min-height: 0;
-        padding: 0.18rem 0.16rem;
+        padding: 0.1rem 0.06rem;
         border-radius: 12px;
-    }
-
-    .zone-timer-item .zt-time {
-        font-size: clamp(0.66rem, 1.55vw, 0.86rem);
-    }
-
-    .zone-timer-item .zt-percent {
-        margin-top: 0.04rem;
-        font-size: clamp(0.48rem, 1.1vw, 0.68rem);
     }
 
     .gauge-shell,
@@ -1127,8 +1095,9 @@ body {
         max-width: calc(100% - 0.2rem);
     }
 
-    .gauge-range-value {
-        font-size: clamp(0.68rem, 1.45vw, 0.9rem);
+    .zone-timer-item .zt-time,
+    .zone-timer-item .zt-percent {
+        line-height: 1;
     }
 
     .zone-summary-panel,
