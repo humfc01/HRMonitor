@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const APP_VERSION = window.APP_VERSION || '1.2.9';
+    const APP_VERSION = window.APP_VERSION || '1.2.10';
 
     // Register Service Worker for PWA Offline Support
     if ('serviceWorker' in navigator) {
@@ -95,6 +95,63 @@ document.addEventListener('DOMContentLoaded', () => {
         3: 'rgba(255, 234, 0, 0.44)',
         4: 'rgba(255, 23, 68, 0.46)',
         5: 'rgba(255, 23, 68, 0.46)'
+    };
+
+    const ACTIVE_ZONE_STYLE = {
+        0: {
+            rgb: ZONE_COLOR_RGB[0] || '74, 85, 104',
+            bg: 'rgba(74, 85, 104, 0.26)',
+            bgStrong: 'rgba(74, 85, 104, 0.38)',
+            border: 'rgba(74, 85, 104, 0.34)',
+            glow: 'rgba(74, 85, 104, 0.20)',
+            glowStrong: 'rgba(74, 85, 104, 0.32)',
+            highlight: 'rgba(255, 255, 255, 0.14)'
+        },
+        1: {
+            rgb: ZONE_COLOR_RGB[1],
+            bg: 'rgba(0, 210, 255, 0.30)',
+            bgStrong: 'rgba(0, 210, 255, 0.42)',
+            border: 'rgba(0, 210, 255, 0.40)',
+            glow: 'rgba(0, 210, 255, 0.26)',
+            glowStrong: 'rgba(0, 210, 255, 0.40)',
+            highlight: 'rgba(255, 255, 255, 0.18)'
+        },
+        2: {
+            rgb: ZONE_COLOR_RGB[2],
+            bg: 'rgba(0, 230, 118, 0.30)',
+            bgStrong: 'rgba(0, 230, 118, 0.42)',
+            border: 'rgba(0, 230, 118, 0.40)',
+            glow: 'rgba(0, 230, 118, 0.26)',
+            glowStrong: 'rgba(0, 230, 118, 0.40)',
+            highlight: 'rgba(255, 255, 255, 0.18)'
+        },
+        3: {
+            rgb: ZONE_COLOR_RGB[3],
+            bg: 'rgba(255, 234, 0, 0.26)',
+            bgStrong: 'rgba(255, 234, 0, 0.38)',
+            border: 'rgba(255, 234, 0, 0.34)',
+            glow: 'rgba(255, 234, 0, 0.22)',
+            glowStrong: 'rgba(255, 234, 0, 0.34)',
+            highlight: 'rgba(255, 255, 255, 0.16)'
+        },
+        4: {
+            rgb: ZONE_COLOR_RGB[4],
+            bg: 'rgba(255, 23, 68, 0.30)',
+            bgStrong: 'rgba(255, 23, 68, 0.44)',
+            border: 'rgba(255, 23, 68, 0.42)',
+            glow: 'rgba(255, 23, 68, 0.28)',
+            glowStrong: 'rgba(255, 23, 68, 0.42)',
+            highlight: 'rgba(255, 255, 255, 0.18)'
+        },
+        5: {
+            rgb: ZONE_COLOR_RGB[5],
+            bg: 'rgba(255, 23, 68, 0.30)',
+            bgStrong: 'rgba(255, 23, 68, 0.44)',
+            border: 'rgba(255, 23, 68, 0.42)',
+            glow: 'rgba(255, 23, 68, 0.28)',
+            glowStrong: 'rgba(255, 23, 68, 0.42)',
+            highlight: 'rgba(255, 255, 255, 0.18)'
+        }
     };
 
     // Bluetooth Service UUIDs (Standard)
@@ -530,9 +587,10 @@ document.addEventListener('DOMContentLoaded', () => {
         root.style.setProperty('--current-zone-color-rgb', ZONE_COLOR_RGB[zone.id]);
         root.style.setProperty('--progress-fill-rgb', ZONE_FILL_RGB[zone.id]);
         root.style.setProperty('--bpm-value-color', 'var(--current-zone-color)');
+        applyActiveZoneVisuals(zone.id);
 
         if (zoneProgressBar) {
-            zoneProgressBar.dataset.activeZone = String(zone.id);
+            zoneProgressBar.dataset.activeZone = zone.id >= 4 ? '45' : String(zone.id);
         }
 
         const visualPercentage = mapHeartRateToBarPosition(percentage);
@@ -565,6 +623,7 @@ document.addEventListener('DOMContentLoaded', () => {
         bpmValue.textContent = '--';
         setCardStatus(bluetoothDevice && bluetoothDevice.gatt && bluetoothDevice.gatt.connected ? 'Idle' : 'Waiting');
         rootMutedState();
+        applyActiveZoneVisuals(0);
         root.style.setProperty('--progress-fill-rgb', '74, 85, 104');
         root.style.setProperty('--bpm-value-color', 'rgba(255, 255, 255, 0.92)');
         if (zoneProgressFill) {
@@ -587,6 +646,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const root = document.documentElement;
         root.style.setProperty('--current-zone-color', 'var(--zone-0)');
         root.style.setProperty('--current-zone-color-rgb', '74, 85, 104');
+    }
+
+    function applyActiveZoneVisuals(zoneId) {
+        const root = document.documentElement;
+        const activeZone = ACTIVE_ZONE_STYLE[zoneId] || ACTIVE_ZONE_STYLE[0];
+
+        root.style.setProperty('--active-zone-rgb', activeZone.rgb);
+        root.style.setProperty('--active-zone-bg', activeZone.bg);
+        root.style.setProperty('--active-zone-bg-strong', activeZone.bgStrong);
+        root.style.setProperty('--active-zone-border', activeZone.border);
+        root.style.setProperty('--active-zone-glow', activeZone.glow);
+        root.style.setProperty('--active-zone-glow-strong', activeZone.glowStrong);
+        root.style.setProperty('--active-zone-highlight', activeZone.highlight);
     }
 
     function syncZoneTimerState(zoneId) {
