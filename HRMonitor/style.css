@@ -5,6 +5,12 @@
     --text-secondary: #a0a6b5;
     --glass-bg: rgba(255, 255, 255, 0.03);
     --glass-border: rgba(255, 255, 255, 0.08);
+    --page-background:
+        radial-gradient(circle at 50% 10%, rgba(var(--current-zone-color-rgb, 74, 85, 104), 0.16), transparent 32%),
+        radial-gradient(circle at 50% 120%, rgba(0, 0, 0, 0.2), transparent 36%),
+        linear-gradient(180deg, #111521 0%, #0b0d14 100%);
+    --app-background:
+        radial-gradient(circle at 50% 0%, rgba(var(--current-zone-color-rgb, 74, 85, 104), 0.15) 0%, transparent 60%);
     
     /* Zone Colors (Neon/Vibrant) */
     --zone-0: #4a5568; /* Disconnected/Idle */
@@ -33,10 +39,7 @@
 
 body {
     font-family: 'Outfit', sans-serif;
-    background:
-        radial-gradient(circle at 50% 10%, rgba(var(--current-zone-color-rgb, 74, 85, 104), 0.16), transparent 32%),
-        radial-gradient(circle at 50% 120%, rgba(0, 0, 0, 0.2), transparent 36%),
-        linear-gradient(180deg, #111521 0%, #0b0d14 100%);
+    background: var(--page-background);
     color: var(--text-primary);
     min-height: 100dvh;
     display: flex;
@@ -54,7 +57,7 @@ body {
     display: flex;
     flex-direction: column;
     position: relative;
-    background: radial-gradient(circle at 50% 0%, rgba(var(--current-zone-color-rgb, 74, 85, 104), 0.15) 0%, transparent 60%);
+    background: var(--app-background);
     transition: background 0.5s ease;
     overflow-y: auto;
 }
@@ -918,6 +921,15 @@ body {
 }
 
 @media (orientation: landscape) {
+    :root {
+        --page-background:
+            radial-gradient(ellipse at center left, rgba(var(--current-zone-color-rgb, 74, 85, 104), 0.14) 0%, transparent 34%),
+            radial-gradient(ellipse at center right, rgba(0, 0, 0, 0.18) 0%, transparent 46%),
+            linear-gradient(90deg, #111521 0%, #0b0d14 100%);
+        --app-background:
+            radial-gradient(ellipse at center left, rgba(var(--current-zone-color-rgb, 74, 85, 104), 0.13) 0%, transparent 58%);
+    }
+
     html,
     body {
         height: 100dvh;
