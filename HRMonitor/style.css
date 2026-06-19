@@ -709,13 +709,7 @@ body {
     font-variant-numeric: tabular-nums;
     user-select: none;
     pointer-events: none;
-}
-
-.hr-history-axis-label {
-    position: absolute;
-    top: 0;
-    transform: translateX(-50%);
-    white-space: nowrap;
+    visibility: hidden;
 }
 
 .zone-summary-panel {

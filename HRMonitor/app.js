@@ -827,6 +827,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setHrHistoryCurrentPosition(null);
             drawHrHistoryTimeMarkers(ctx, bandLeft, bandTop, plotWidth, plotHeight);
             drawHrZoneBoundaryLines(ctx, bandLeft, bandTop, plotWidth, plotHeight);
+            drawHrHistoryTimeLabels(ctx, bandLeft, bandTop, plotWidth, plotHeight);
             return;
         }
 
@@ -838,6 +839,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setHrHistoryCurrentPosition(null);
             drawHrHistoryTimeMarkers(ctx, bandLeft, bandTop, plotWidth, plotHeight);
             drawHrZoneBoundaryLines(ctx, bandLeft, bandTop, plotWidth, plotHeight);
+            drawHrHistoryTimeLabels(ctx, bandLeft, bandTop, plotWidth, plotHeight);
             return;
         }
 
@@ -885,6 +887,7 @@ document.addEventListener('DOMContentLoaded', () => {
         drawHrHistoryTimeMarkers(ctx, bandLeft, bandTop, plotWidth, plotHeight);
         drawHrZoneBoundaryLines(ctx, bandLeft, bandTop, plotWidth, plotHeight);
         drawHrHistoryOutline(ctx, segments);
+        drawHrHistoryTimeLabels(ctx, bandLeft, bandTop, plotWidth, plotHeight);
         setHrHistoryCurrentPosition(latestPoint);
     }
 
@@ -994,7 +997,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.lineCap = 'round';
 
         markerMinutes.forEach(minute => {
-            const x = left + ((minute / 60) * width);
+            const x = getHrHistoryTimeMarkerX(left, width, minute);
             ctx.beginPath();
             ctx.moveTo(x, top);
             ctx.lineTo(x, top + height);
@@ -1002,6 +1005,32 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         ctx.restore();
+    }
+
+    function drawHrHistoryTimeLabels(ctx, left, top, width, height) {
+        const markerMinutes = [10, 20, 30, 40, 50];
+        const labelBottomY = top + (1 - (mapHeartRateToBarPosition(81) / 100)) * height;
+        const fontSize = Math.max(8, Math.round(9 * hrHistoryDpr));
+
+        ctx.save();
+        ctx.font = `700 ${fontSize}px 'Montserrat', sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.90)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.72)';
+        ctx.shadowBlur = Math.max(2, 2 * hrHistoryDpr);
+        ctx.shadowOffsetY = Math.max(1, hrHistoryDpr);
+
+        markerMinutes.forEach(minute => {
+            const x = getHrHistoryTimeMarkerX(left, width, minute);
+            ctx.fillText(String(minute), x, labelBottomY);
+        });
+
+        ctx.restore();
+    }
+
+    function getHrHistoryTimeMarkerX(left, width, minute) {
+        return left + ((minute / 60) * width);
     }
 
     function drawHrZoneBoundaryLines(ctx, left, top, width, height) {
