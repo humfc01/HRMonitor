@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const APP_VERSION = window.APP_VERSION || '1.2.15';
+    const APP_VERSION = window.APP_VERSION || '1.2.16';
 
     // Register Service Worker for PWA Offline Support
     if ('serviceWorker' in navigator) {
@@ -176,10 +176,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let confirmDialogOpen = false;
     const hrHistoryRealtimeSamples = [];
     const hrHistoryAggregatedBuckets = [];
-    let hrHistoryTransitionBucket = null;
     const HR_HISTORY_WINDOW_MS = 60 * 60 * 1000;
     const HR_HISTORY_REALTIME_WINDOW_MS = 30 * 1000;
-    const HR_HISTORY_BUCKET_MS = 30 * 1000;
+    const HR_HISTORY_BUCKET_MS = 60 * 1000;
     const HR_GRAPH_PADDING = { top: 10, right: 8, bottom: 10, left: 8 };
     const HR_HISTORY_TIME_MARKER_MINUTES = [5, 15, 30, 45, 53];
     const HR_HISTORY_TIME_LABEL_MINUTES = [5, 15, 30, 45];
@@ -713,7 +712,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function mergeHrHistoryBucketSample(target, sample, bucketStart, bucketEnd) {
         if (!target || sample.bpm > target.bpm || (sample.bpm === target.bpm && sample.timestamp > target.timestamp)) {
             return {
-                timestamp: sample.timestamp,
+                timestamp: bucketEnd,
                 bpm: sample.bpm,
                 zoneId: sample.zoneId,
                 bucketStart,
@@ -741,49 +740,52 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function reconcileHrHistoryData(now = Date.now()) {
-        const completedThrough = now - HR_HISTORY_REALTIME_WINDOW_MS;
+        const visibleStart = getHrHistoryVisibleStart(now);
+        const realtimeCutoff = now - HR_HISTORY_REALTIME_WINDOW_MS;
+        const nextRealtimeSamples = [];
+        let currentCompletedBucket = null;
 
-        while (hrHistoryRealtimeSamples.length && hrHistoryRealtimeSamples[0].timestamp < completedThrough) {
-            const sample = hrHistoryRealtimeSamples.shift();
+        for (let i = 0; i < hrHistoryRealtimeSamples.length; i++) {
+            const sample = hrHistoryRealtimeSamples[i];
+            if (sample.timestamp < visibleStart) {
+                continue;
+            }
+
             const bucketStart = getHrHistoryBucketStart(sample.timestamp);
             const bucketEnd = getHrHistoryBucketEnd(sample.timestamp);
+            const bucketIsComplete = bucketEnd <= now;
 
-            if (bucketEnd <= completedThrough) {
-                appendOrUpdateAggregatedBucket(
-                    mergeHrHistoryBucketSample(
-                        hrHistoryAggregatedBuckets[hrHistoryAggregatedBuckets.length - 1]?.bucketEnd === bucketEnd
-                            ? hrHistoryAggregatedBuckets[hrHistoryAggregatedBuckets.length - 1]
-                            : null,
-                        sample,
-                        bucketStart,
-                        bucketEnd
-                    )
+            if (bucketIsComplete) {
+                currentCompletedBucket = mergeHrHistoryBucketSample(
+                    currentCompletedBucket && currentCompletedBucket.bucketEnd === bucketEnd
+                        ? currentCompletedBucket
+                        : null,
+                    sample,
+                    bucketStart,
+                    bucketEnd
                 );
-                continue;
-            }
 
-            if (!hrHistoryTransitionBucket || hrHistoryTransitionBucket.bucketEnd !== bucketEnd) {
-                if (hrHistoryTransitionBucket) {
-                    appendOrUpdateAggregatedBucket(hrHistoryTransitionBucket);
+                const nextSample = nextRealtimeSamples.length ? nextRealtimeSamples[nextRealtimeSamples.length - 1] : null;
+                if (sample.timestamp >= realtimeCutoff) {
+                    if (!nextSample || nextSample.timestamp !== sample.timestamp || nextSample.bpm !== sample.bpm) {
+                        nextRealtimeSamples.push(sample);
+                    }
                 }
 
-                hrHistoryTransitionBucket = mergeHrHistoryBucketSample(null, sample, bucketStart, bucketEnd);
+                const nextInputSample = hrHistoryRealtimeSamples[i + 1];
+                const nextBucketEnd = nextInputSample ? getHrHistoryBucketEnd(nextInputSample.timestamp) : null;
+                if (currentCompletedBucket && nextBucketEnd !== bucketEnd) {
+                    appendOrUpdateAggregatedBucket(currentCompletedBucket);
+                    currentCompletedBucket = null;
+                }
                 continue;
             }
 
-            hrHistoryTransitionBucket = mergeHrHistoryBucketSample(
-                hrHistoryTransitionBucket,
-                sample,
-                bucketStart,
-                bucketEnd
-            );
+            nextRealtimeSamples.push(sample);
         }
 
-        if (hrHistoryTransitionBucket && hrHistoryTransitionBucket.bucketEnd <= completedThrough) {
-            appendOrUpdateAggregatedBucket(hrHistoryTransitionBucket);
-            hrHistoryTransitionBucket = null;
-        }
-
+        hrHistoryRealtimeSamples.length = 0;
+        hrHistoryRealtimeSamples.push(...nextRealtimeSamples);
         pruneHrHistoryData(now);
     }
 
@@ -792,10 +794,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         while (hrHistoryAggregatedBuckets.length && hrHistoryAggregatedBuckets[0].timestamp < visibleStart) {
             hrHistoryAggregatedBuckets.shift();
-        }
-
-        if (hrHistoryTransitionBucket && hrHistoryTransitionBucket.timestamp < visibleStart) {
-            hrHistoryTransitionBucket = null;
         }
 
         while (hrHistoryRealtimeSamples.length && hrHistoryRealtimeSamples[0].timestamp < visibleStart) {
@@ -808,11 +806,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const visibleStart = getHrHistoryVisibleStart(now);
         const aggregatedPoints = hrHistoryAggregatedBuckets.filter(sample => sample.timestamp >= visibleStart);
-        const transitionPoints = hrHistoryTransitionBucket && hrHistoryTransitionBucket.timestamp >= visibleStart
-            ? [hrHistoryTransitionBucket]
-            : [];
         const realtimePoints = hrHistoryRealtimeSamples.filter(sample => sample.timestamp >= visibleStart);
-        const combined = aggregatedPoints.concat(transitionPoints, realtimePoints);
+        const combined = aggregatedPoints.concat(realtimePoints);
 
         combined.sort((a, b) => a.timestamp - b.timestamp);
 
@@ -840,13 +835,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function hasHrHistoryData() {
-        return hrHistoryAggregatedBuckets.length > 0 || hrHistoryRealtimeSamples.length > 0 || Boolean(hrHistoryTransitionBucket);
+        return hrHistoryAggregatedBuckets.length > 0 || hrHistoryRealtimeSamples.length > 0;
     }
 
     function clearHrHistory() {
         hrHistoryRealtimeSamples.length = 0;
         hrHistoryAggregatedBuckets.length = 0;
-        hrHistoryTransitionBucket = null;
         updateHrHistoryEmptyState();
         stopHrHistoryAnimation();
         setHrHistoryCurrentPosition(null);
