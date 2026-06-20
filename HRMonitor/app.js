@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const APP_VERSION = window.APP_VERSION || '1.2.16';
+    const APP_VERSION = window.APP_VERSION || '1.2.19';
 
     // Register Service Worker for PWA Offline Support
     if ('serviceWorker' in navigator) {
@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // DOM Elements
     const connectBtn = document.getElementById('connectBtn');
+    const resetBtn = document.getElementById('resetBtn');
     const bpmValue = document.getElementById('bpmValue');
     const bpmStatusText = document.getElementById('bpmStatusText');
     const mhrDisplay = document.getElementById('mhrDisplay');
@@ -37,6 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const ageInput = document.getElementById('ageInput');
     const customMhrInput = document.getElementById('customMhrInput');
     const workoutConfirmModal = document.getElementById('workoutConfirmModal');
+    const workoutConfirmTitle = document.getElementById('workoutConfirmTitle');
+    const workoutConfirmMessage = document.getElementById('workoutConfirmMessage');
     const confirmWorkoutEndBtn = document.getElementById('confirmWorkoutEndBtn');
     const cancelWorkoutEndBtn = document.getElementById('cancelWorkoutEndBtn');
 
@@ -159,6 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Bluetooth Service UUIDs (Standard)
     const HR_SERVICE = 'heart_rate';
     const HR_MEASUREMENT = 'heart_rate_measurement';
+    const SESSION_STORAGE_KEY = 'hr_active_session_v1';
 
     // State
     let bluetoothDevice = null;
@@ -170,6 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastHeartRate = null;
     let workoutEndPromptResolver = null;
     let workoutEndPromptPromise = null;
+    let workoutConfirmAction = null;
     let disconnectInProgress = false;
     let backGuardArmed = false;
     let allowBackExit = false;
@@ -187,6 +192,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let hrHistoryResizeObserver = null;
     let hrHistoryDpr = window.devicePixelRatio || 1;
     let workoutHistoryStatePushed = Boolean(history.state && history.state.workoutGuard);
+    let sessionStart = null;
+    let timerInterval = null;
+    const zoneSeconds = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const workoutStats = createEmptyWorkoutStats();
     
     // Initialize UI
     ageInput.value = age;
@@ -230,6 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const resolve = workoutEndPromptResolver;
             workoutEndPromptResolver = null;
             workoutEndPromptPromise = null;
+            workoutConfirmAction = null;
             hideWorkoutConfirmModal();
             resolve(true);
         }
@@ -240,6 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const resolve = workoutEndPromptResolver;
             workoutEndPromptResolver = null;
             workoutEndPromptPromise = null;
+            workoutConfirmAction = null;
             hideWorkoutConfirmModal();
             resolve(false);
         }
@@ -256,13 +267,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Bluetooth Connection Flow
     connectBtn.addEventListener('click', async () => {
         if (bluetoothDevice && bluetoothDevice.gatt.connected) {
-            if (await confirmEndWorkout()) {
+            if (await confirmDeviceDisconnect()) {
                 await disconnect();
             }
             return;
         }
 
         try {
+            const hasExistingSession = hasSavedSessionState() || isSessionRunning();
+            if (hasExistingSession) {
+                const continueSession = await confirmResumeOrStartNewSession();
+                if (!continueSession) {
+                    startFreshSession();
+                }
+            }
+
+            detachHeartRateCharacteristicListener();
             setCardStatus('Scanning');
             updateStatus('Requesting Bluetooth Device...', false);
             
@@ -271,14 +291,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('Web Bluetooth is not supported in this browser. Please use Chrome on Android or Desktop.');
             }
 
-            bluetoothDevice = await navigator.bluetooth.requestDevice({
+            const requestedDevice = await navigator.bluetooth.requestDevice({
                 filters: [{ services: [HR_SERVICE] }]
             });
 
-            bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
+            bindBluetoothDevice(requestedDevice);
 
             updateStatus('Connecting to GATT Server...', false);
-            const server = await bluetoothDevice.gatt.connect();
+            const server = await requestedDevice.gatt.connect();
 
             updateStatus('Getting Heart Rate Service...', false);
             const service = await server.getPrimaryService(HR_SERVICE);
@@ -289,24 +309,44 @@ document.addEventListener('DOMContentLoaded', () => {
             updateStatus('Subscribing to updates...', false);
             await heartRateCharacteristic.startNotifications();
             
+            heartRateCharacteristic.removeEventListener('characteristicvaluechanged', handleHeartRateMeasurement);
             heartRateCharacteristic.addEventListener('characteristicvaluechanged', handleHeartRateMeasurement);
             
-            updateStatus(`Connected: ${bluetoothDevice.name || 'HR Monitor'}`, true);
+            updateStatus(`Connected: ${requestedDevice.name || 'HR Monitor'}`, true);
             setCardStatus('Connected');
             setConnectButtonLabel('Disconnect');
             
-            // Start tracking session
-            startTimer();
+            // Resume the current workout if one exists; otherwise start a fresh one.
+            if (isSessionRunning()) {
+                resumeSession();
+            } else {
+                beginNewSession();
+            }
             requestWakeLock();
             armBackButtonGuard();
+            saveSessionState();
             
         } catch (error) {
             console.error(error);
             updateStatus(`Error: ${error.message}`, false);
             setCardStatus('Waiting');
+            if (bluetoothDevice) {
+                bluetoothDevice.removeEventListener('gattserverdisconnected', onDisconnected);
+            }
+            detachHeartRateCharacteristicListener();
             bluetoothDevice = null;
         }
     });
+
+    if (resetBtn) {
+        resetBtn.addEventListener('click', async () => {
+            if (!await confirmWorkoutReset()) {
+                return;
+            }
+
+            resetWorkoutSession();
+        });
+    }
 
     // --- Wake Lock API ---
     let wakeLock = null;
@@ -338,7 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     window.addEventListener('beforeunload', (event) => {
-        if (!hasActiveWorkout()) return;
+        if (!hasActiveWorkout() || allowBackExit) return;
 
         event.preventDefault();
         event.returnValue = '';
@@ -357,12 +397,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         confirmDialogOpen = true;
-        const shouldEndWorkout = await confirmEndWorkout();
+        const shouldEndWorkout = await confirmLeaveWorkoutPage();
         confirmDialogOpen = false;
 
         if (shouldEndWorkout) {
             allowBackExit = true;
-            await disconnect();
             history.back();
             return;
         }
@@ -420,7 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function isSessionRunning() {
-        return timerInterval !== null || sessionStart !== null;
+        return sessionStart !== null;
     }
 
     function armBackButtonGuard() {
@@ -456,13 +495,23 @@ document.addEventListener('DOMContentLoaded', () => {
         workoutConfirmModal.setAttribute('aria-hidden', 'true');
     }
 
-    function confirmEndWorkout() {
-        if (!hasActiveWorkout()) return Promise.resolve(false);
-
+    function confirmAction(options) {
         if (workoutEndPromptPromise) {
             return workoutEndPromptPromise;
         }
 
+        workoutConfirmAction = options;
+
+        if (workoutConfirmTitle) {
+            workoutConfirmTitle.textContent = options.title;
+        }
+
+        if (workoutConfirmMessage) {
+            workoutConfirmMessage.textContent = options.message;
+        }
+
+        confirmWorkoutEndBtn.textContent = options.confirmLabel;
+        confirmWorkoutEndBtn.classList.toggle('danger-btn', Boolean(options.danger));
         showWorkoutConfirmModal();
 
         workoutEndPromptPromise = new Promise(resolve => {
@@ -470,6 +519,71 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         return workoutEndPromptPromise;
+    }
+
+    function confirmDeviceDisconnect() {
+        if (!isBluetoothConnected()) {
+            return Promise.resolve(false);
+        }
+
+        return confirmAction({
+            title: 'Disconnect monitor?',
+            message: 'Disconnect from the heart rate monitor? Your current workout data will stay intact.',
+            confirmLabel: 'Disconnect',
+            danger: false
+        });
+    }
+
+    function confirmResumeOrStartNewSession() {
+        return confirmAction({
+            title: 'Continue session?',
+            message: 'A saved workout session was found. Continue it, or start a new session and clear the old data?',
+            confirmLabel: 'Continue Session',
+            danger: false
+        });
+    }
+
+    function confirmWorkoutReset() {
+        if (!hasActiveWorkout() && !hasSavedSessionState()) {
+            return Promise.resolve(false);
+        }
+
+        return confirmAction({
+            title: 'Reset workout?',
+            message: isBluetoothConnected()
+                ? 'Clear this workout session and saved progress? The heart rate monitor connection will stay active.'
+                : 'Clear this workout session and saved progress? You can reconnect later and start fresh.',
+            confirmLabel: 'Reset',
+            danger: true
+        });
+    }
+
+    function startFreshSession() {
+        stopTimer();
+        sessionStart = null;
+        currentZoneId = 0;
+        lastHeartRate = null;
+        clearHrHistory();
+        resetZoneTimerState();
+        resetWorkoutStats();
+        clearSavedSessionState();
+        setNoHeartRateState();
+        sessionTimerEl.textContent = '00:00';
+        updateZoneSummaryDisplay(0);
+        resetBackButtonGuard();
+    }
+
+    function confirmLeaveWorkoutPage() {
+        if (!hasActiveWorkout()) {
+            return Promise.resolve(false);
+        }
+
+        return confirmAction({
+            title: 'Leave workout view?',
+            message: 'Leave this page? Your current workout session will stay saved and can be resumed when you return.',
+            confirmLabel: 'Leave',
+            danger: false
+        });
     }
 
     async function disconnect() {
@@ -481,6 +595,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             if (heartRateCharacteristic) {
+                heartRateCharacteristic.removeEventListener('characteristicvaluechanged', handleHeartRateMeasurement);
                 try {
                     await heartRateCharacteristic.stopNotifications();
                 } catch (err) {
@@ -488,36 +603,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            bluetoothDevice.removeEventListener('gattserverdisconnected', onDisconnected);
             bluetoothDevice.gatt.disconnect();
+            cleanupConnectionState({ reason: 'manual-disconnect' });
         } finally {
             disconnectInProgress = false;
         }
     }
 
-    function cleanupAfterDisconnect() {
+    function cleanupConnectionState({ reason = 'disconnect' } = {}) {
         hideWorkoutConfirmModal();
         workoutEndPromptResolver = null;
         workoutEndPromptPromise = null;
-        resetBackButtonGuard();
-        updateStatus('Disconnected', false);
-        setCardStatus('Waiting');
+        workoutConfirmAction = null;
+        updateStatus(
+            reason === 'unexpected-disconnect'
+                ? 'Connection lost. Reconnect when ready.'
+                : 'Disconnected',
+            false
+        );
+        setCardStatus(isSessionRunning() ? 'Paused' : 'Waiting');
         setNoHeartRateState();
         bpmValue.textContent = '--';
         lastHeartRate = null;
-        clearHrHistory();
-        stopHrHistoryAnimation();
-        stopTimer();
         releaseWakeLock();
-        heartRateCharacteristic = null;
+        detachHeartRateCharacteristicListener();
         bluetoothDevice = null;
         disconnectInProgress = false;
+        if (isSessionRunning()) {
+            armBackButtonGuard();
+        } else {
+            resetBackButtonGuard();
+        }
+        saveSessionState();
     }
 
     function onDisconnected() {
-        cleanupAfterDisconnect();
+        cleanupConnectionState({ reason: 'unexpected-disconnect' });
     }
 
     function handleHeartRateMeasurement(event) {
+        if (!isBluetoothConnected() || !heartRateCharacteristic) {
+            return;
+        }
+
         const value = event.target.value;
         const flags = value.getUint8(0);
         
@@ -534,6 +663,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         bpmValue.textContent = heartRate;
         lastHeartRate = heartRate;
+        recordWorkoutStats(heartRate);
+        setCardStatus('Connected');
         
         // Simple heartbeat animation
         heartIcon.classList.add('heart-beat');
@@ -541,6 +672,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         calculateZone(heartRate);
         addHrHistorySample(heartRate, currentZoneId);
+        saveSessionState();
     }
 
     function calculateZone(hr) {
@@ -607,7 +739,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function setNoHeartRateState() {
         const root = document.documentElement;
         bpmValue.textContent = '--';
-        setCardStatus(bluetoothDevice && bluetoothDevice.gatt && bluetoothDevice.gatt.connected ? 'Idle' : 'Waiting');
+        setCardStatus(bluetoothDevice && bluetoothDevice.gatt && bluetoothDevice.gatt.connected ? 'Idle' : (isSessionRunning() ? 'Paused' : 'Waiting'));
         rootMutedState();
         applyActiveZoneVisuals(0);
 
@@ -1210,10 +1342,6 @@ document.addEventListener('DOMContentLoaded', () => {
         45: document.getElementById('zone45Percent')
     };
 
-    let sessionStart = null;
-    let timerInterval = null;
-    const zoneSeconds = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-
     function formatTime(totalSeconds) {
         const m = Math.floor(totalSeconds / 60);
         const s = totalSeconds % 60;
@@ -1221,19 +1349,59 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${pad(m)}:${pad(s)}`;
     }
 
-    function startTimer() {
-        if (timerInterval) clearInterval(timerInterval);
-        
-        sessionStart = Date.now();
-        currentZoneId = 0;
-        lastHeartRate = null;
-        clearHrHistory();
+    function createEmptyWorkoutStats() {
+        return {
+            sampleCount: 0,
+            totalBpm: 0,
+            minBpm: null,
+            maxBpm: null
+        };
+    }
+
+    function recordWorkoutStats(heartRate) {
+        if (!Number.isFinite(heartRate) || heartRate <= 0) return;
+
+        workoutStats.sampleCount += 1;
+        workoutStats.totalBpm += heartRate;
+        workoutStats.minBpm = workoutStats.minBpm === null ? heartRate : Math.min(workoutStats.minBpm, heartRate);
+        workoutStats.maxBpm = workoutStats.maxBpm === null ? heartRate : Math.max(workoutStats.maxBpm, heartRate);
+    }
+
+    function getSessionElapsedSeconds(now = Date.now()) {
+        if (!sessionStart) return 0;
+        return Math.max(0, Math.floor((now - sessionStart) / 1000));
+    }
+
+    function updateSessionDisplay() {
+        const elapsed = getSessionElapsedSeconds();
+        sessionTimerEl.textContent = formatTime(elapsed);
+        updateZoneSummaryDisplay(elapsed);
+        scheduleHrHistoryRender();
+    }
+
+    function resetZoneTimerState() {
         zoneSeconds[1] = 0;
         zoneSeconds[2] = 0;
         zoneSeconds[3] = 0;
         zoneSeconds[4] = 0;
         zoneSeconds[5] = 0;
-        
+    }
+
+    function resetWorkoutStats() {
+        const emptyStats = createEmptyWorkoutStats();
+        workoutStats.sampleCount = emptyStats.sampleCount;
+        workoutStats.totalBpm = emptyStats.totalBpm;
+        workoutStats.minBpm = emptyStats.minBpm;
+        workoutStats.maxBpm = emptyStats.maxBpm;
+    }
+
+    function beginNewSession(startTimestamp = Date.now()) {
+        currentZoneId = 0;
+        lastHeartRate = null;
+        sessionStart = startTimestamp;
+        clearHrHistory();
+        resetZoneTimerState();
+        resetWorkoutStats();
         sessionTimerEl.textContent = '00:00';
         zoneTimerEls[1].textContent = '00:00';
         zoneTimerEls[2].textContent = '00:00';
@@ -1244,11 +1412,27 @@ document.addEventListener('DOMContentLoaded', () => {
         zonePercentEls[3].textContent = '0%';
         zonePercentEls[45].textContent = '0%';
         syncZoneTimerState(0);
-
+        setNoHeartRateState();
+        ensureTimerRunning();
         armBackButtonGuard();
+        saveSessionState();
+    }
+
+    function resumeSession() {
+        if (!sessionStart) return;
+
+        ensureTimerRunning();
+        updateSessionDisplay();
+        armBackButtonGuard();
+        saveSessionState();
+    }
+
+    function ensureTimerRunning() {
+        if (timerInterval) return;
+
         timerInterval = setInterval(() => {
             if (!sessionStart) return;
-            const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+            const elapsed = getSessionElapsedSeconds();
             sessionTimerEl.textContent = formatTime(elapsed);
 
             if (currentZoneId >= 1 && currentZoneId <= 5) {
@@ -1258,15 +1442,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
             updateZoneSummaryDisplay(elapsed);
             scheduleHrHistoryRender();
+            saveSessionState();
         }, 1000);
     }
 
-    function stopTimer() {
+    function stopTimer({ clearSession = true } = {}) {
         if (timerInterval) {
             clearInterval(timerInterval);
             timerInterval = null;
         }
+
+        if (clearSession) {
+            sessionStart = null;
+        }
+    }
+
+    function resetWorkoutSession() {
+        stopTimer();
         sessionStart = null;
+        currentZoneId = 0;
+        lastHeartRate = null;
+        clearHrHistory();
+        resetZoneTimerState();
+        resetWorkoutStats();
+        clearSavedSessionState();
+        setNoHeartRateState();
+        sessionTimerEl.textContent = '00:00';
+        updateZoneSummaryDisplay(0);
+
+        if (isBluetoothConnected()) {
+            beginNewSession();
+            updateStatus(`Connected: ${bluetoothDevice.name || 'HR Monitor'}`, true);
+            setCardStatus('Idle');
+            return;
+        }
+
+        resetBackButtonGuard();
+        updateStatus('Disconnected', false);
+        setCardStatus('Waiting');
     }
 
     function updateZoneTimerDisplay(zoneId) {
@@ -1301,4 +1514,115 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    function bindBluetoothDevice(device) {
+        if (bluetoothDevice && bluetoothDevice !== device) {
+            bluetoothDevice.removeEventListener('gattserverdisconnected', onDisconnected);
+        }
+
+        bluetoothDevice = device;
+        bluetoothDevice.removeEventListener('gattserverdisconnected', onDisconnected);
+        bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
+    }
+
+    function detachHeartRateCharacteristicListener() {
+        if (!heartRateCharacteristic) return;
+
+        heartRateCharacteristic.removeEventListener('characteristicvaluechanged', handleHeartRateMeasurement);
+        heartRateCharacteristic = null;
+    }
+
+    function hasSavedSessionState() {
+        return Boolean(localStorage.getItem(SESSION_STORAGE_KEY));
+    }
+
+    function saveSessionState() {
+        if (!sessionStart) {
+            clearSavedSessionState();
+            return;
+        }
+
+        const sessionState = {
+            version: 1,
+            sessionStart,
+            zoneSeconds: { ...zoneSeconds },
+            workoutStats: { ...workoutStats },
+            hrHistoryRealtimeSamples: hrHistoryRealtimeSamples.map(sample => ({ ...sample })),
+            hrHistoryAggregatedBuckets: hrHistoryAggregatedBuckets.map(bucket => ({ ...bucket }))
+        };
+
+        localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(sessionState));
+    }
+
+    function clearSavedSessionState() {
+        localStorage.removeItem(SESSION_STORAGE_KEY);
+    }
+
+    function restoreSessionState() {
+        const rawSessionState = localStorage.getItem(SESSION_STORAGE_KEY);
+        if (!rawSessionState) {
+            return;
+        }
+
+        try {
+            const sessionState = JSON.parse(rawSessionState);
+            if (!sessionState || !Number.isFinite(sessionState.sessionStart)) {
+                clearSavedSessionState();
+                return;
+            }
+
+            sessionStart = sessionState.sessionStart;
+
+            [1, 2, 3, 4, 5].forEach(zoneId => {
+                const restoredValue = Number(sessionState.zoneSeconds && sessionState.zoneSeconds[zoneId]);
+                zoneSeconds[zoneId] = Number.isFinite(restoredValue) && restoredValue >= 0
+                    ? Math.floor(restoredValue)
+                    : 0;
+            });
+
+            resetWorkoutStats();
+            if (sessionState.workoutStats) {
+                workoutStats.sampleCount = Math.max(0, Number(sessionState.workoutStats.sampleCount) || 0);
+                workoutStats.totalBpm = Math.max(0, Number(sessionState.workoutStats.totalBpm) || 0);
+                workoutStats.minBpm = Number.isFinite(Number(sessionState.workoutStats.minBpm))
+                    ? Number(sessionState.workoutStats.minBpm)
+                    : null;
+                workoutStats.maxBpm = Number.isFinite(Number(sessionState.workoutStats.maxBpm))
+                    ? Number(sessionState.workoutStats.maxBpm)
+                    : null;
+            }
+
+            hrHistoryRealtimeSamples.length = 0;
+            hrHistoryAggregatedBuckets.length = 0;
+            if (Array.isArray(sessionState.hrHistoryRealtimeSamples)) {
+                hrHistoryRealtimeSamples.push(...sessionState.hrHistoryRealtimeSamples.filter(isValidHistorySample));
+            }
+            if (Array.isArray(sessionState.hrHistoryAggregatedBuckets)) {
+                hrHistoryAggregatedBuckets.push(...sessionState.hrHistoryAggregatedBuckets.filter(isValidHistoryBucket));
+            }
+
+            lastHeartRate = null;
+            currentZoneId = 0;
+            setNoHeartRateState();
+            resumeSession();
+        } catch (error) {
+            console.error('Failed to restore workout session', error);
+            clearSavedSessionState();
+        }
+    }
+
+    function isValidHistorySample(sample) {
+        return sample
+            && Number.isFinite(sample.timestamp)
+            && Number.isFinite(sample.bpm)
+            && Number.isFinite(sample.zoneId);
+    }
+
+    function isValidHistoryBucket(bucket) {
+        return isValidHistorySample(bucket)
+            && Number.isFinite(bucket.bucketStart)
+            && Number.isFinite(bucket.bucketEnd);
+    }
+
+    restoreSessionState();
 });

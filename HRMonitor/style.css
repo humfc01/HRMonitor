@@ -71,8 +71,8 @@
     --current-zone-color-rgb: 74, 85, 104;
     --flash-zone-rgb: 74, 85, 104;
     --zone-separator-color: rgba(255, 255, 255, 0.16);
-    --bpm-font-size: 74px;
-    --time-section-font-size: 24px;
+    --bpm-font-size: 100px;
+    --time-section-font-size: 40px;
     --time-section-letter-spacing: 0.08em;
     --zone-timer-time-size: 18px;
     --zone-timer-percent-size: calc(var(--zone-timer-time-size) / 1.5);
@@ -167,6 +167,20 @@ body {
     text-overflow: ellipsis;
 }
 
+.header-reset-btn {
+    flex: 0 0 auto !important;
+    width: 2.6rem;
+    min-width: 2.6rem;
+    height: 2.6rem;
+    padding: 0;
+    border-radius: 100px;
+}
+
+.header-reset-btn svg {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
 .header .primary-btn {
     width: auto;
     flex: 1 1 auto;
@@ -249,7 +263,7 @@ body {
     backdrop-filter: none;
     border: 0;
     box-shadow: none;
-    padding: clamp(0.35rem, 1.2vw, 0.65rem) 0;
+    padding: 0 0 0 0;
     gap: 0.28rem;
 }
 
@@ -373,8 +387,8 @@ body {
     align-items: flex-start;
     gap: 0;
     width: 100%;
-    margin: 0 0 0.28rem;
-    padding: 0.05rem 0 0.12rem;
+    margin: 0 0 0 0;
+    padding: 0 0 0 0;
     border-radius: 0;
     background: transparent;
     border: 0;
@@ -622,7 +636,7 @@ body {
     }
 
     .hr-display {
-        margin: 0.02rem 0 0.3rem;
+        margin: 0 0 0 0;
         min-height: clamp(168px, 30vw, 210px);
     }
 
@@ -632,10 +646,6 @@ body {
         padding: 0.85rem;
     }
 
-    .hr-content {
-        padding: 0.48rem 0.6rem 0.68rem;
-    }
-
     .session-timer {
         justify-content: flex-end;
         align-items: flex-start;
@@ -643,10 +653,6 @@ body {
         padding: 0.03rem 0 0.08rem;
         border-radius: 0;
         margin-bottom: 0.24rem;
-    }
-
-    .hr-content {
-        min-height: clamp(168px, 30vw, 210px);
     }
 
     .bpm-main {
@@ -671,6 +677,12 @@ body {
         height: 2.6rem;
         padding: 0 0.9rem;
         font-size: 0.95rem;
+    }
+
+    .header-reset-btn {
+        width: 2.6rem;
+        min-width: 2.6rem;
+        height: 2.6rem;
     }
 }
 
@@ -767,6 +779,12 @@ body {
         height: 2.2rem;
     }
 
+    .header-reset-btn {
+        width: 2.2rem;
+        min-width: 2.2rem;
+        height: 2.2rem;
+    }
+
     .bpm-label {
         font-size: 10px;
     }
@@ -780,11 +798,6 @@ body {
 
     .pulsing-circles {
         width: 220px;
-    }
-
-    .hr-content {
-        min-height: clamp(104px, 17vw, 140px);
-        padding: 0.12rem 0;
     }
 
     .session-timer {
