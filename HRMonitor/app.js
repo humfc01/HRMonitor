@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const APP_VERSION = window.APP_VERSION || '1.2.10';
+    const APP_VERSION = window.APP_VERSION || '1.2.11';
 
     // Register Service Worker for PWA Offline Support
     if ('serviceWorker' in navigator) {
@@ -1015,25 +1015,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function drawHrZoneThresholdLabels(ctx, left, top, width, height) {
-        const boundaryPercents = [60, 70, 80, 100];
+        const boundaryPercents = [60, 70, 80];
         const rightInset = Math.max(8 * hrHistoryDpr, width * 0.03);
         const labelX = left + width - rightInset;
-        const fontSize = Math.max(9, Math.round(10 * hrHistoryDpr));
+        const fontSize = Math.max(11, Math.round(12 * hrHistoryDpr));
+        const redZoneTopY = top + (1 - (mapHeartRateToBarPosition(100) / 100)) * height;
+        const redZoneBottomY = top + (1 - (mapHeartRateToBarPosition(80) / 100)) * height;
+        const redZoneCenterY = redZoneTopY + ((redZoneBottomY - redZoneTopY) / 2);
 
         ctx.save();
         ctx.font = `700 ${fontSize}px 'Montserrat', sans-serif`;
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.52)';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.58)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.90)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.72)';
         ctx.shadowBlur = Math.max(2, 2 * hrHistoryDpr);
         ctx.shadowOffsetY = Math.max(1, hrHistoryDpr);
 
-        boundaryPercents.forEach((percent, index) => {
+        boundaryPercents.forEach(percent => {
             const boundaryPosition = mapHeartRateToBarPosition(percent);
             const boundaryY = top + (1 - (boundaryPosition / 100)) * height;
             const labelY = clamp(
-                boundaryY + (index === boundaryPercents.length - 1 ? fontSize * 0.7 : -fontSize * 0.7),
+                boundaryY,
                 top + (fontSize * 0.9),
                 top + height - (fontSize * 0.9)
             );
@@ -1041,6 +1044,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             ctx.fillText(String(bpmLabel), labelX, labelY);
         });
+
+        ctx.fillText(
+            String(Math.round(mhr)),
+            labelX,
+            clamp(redZoneCenterY, top + (fontSize * 0.9), top + height - (fontSize * 0.9))
+        );
 
         ctx.restore();
     }
