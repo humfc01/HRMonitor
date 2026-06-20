@@ -26,8 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const zoneTimersEl = document.getElementById('zoneTimers');
     const hrHistoryCanvas = document.getElementById('hrHistoryCanvas');
     const hrHistoryCurrentPoint = document.getElementById('hrHistoryCurrentPoint');
-    const hrHistoryCurrentLine = document.getElementById('hrHistoryCurrentLine');
-    const hrHistoryCurrentDot = document.getElementById('hrHistoryCurrentDot');
+    const hrHistoryBadge = document.getElementById('hrHistoryBadge');
+    const hrHistoryBadgeText = document.getElementById('hrHistoryBadgeText');
     
     // Settings Elements
     const settingsBtn = document.getElementById('settingsBtn');
@@ -1068,7 +1068,7 @@ document.addEventListener('DOMContentLoaded', () => {
         drawHrZoneBoundaryLines(ctx, bandLeft, bandTop, plotWidth, plotHeight);
         drawHrZoneThresholdLabels(ctx, bandLeft, bandTop, plotWidth, plotHeight);
         drawHrHistoryTimeLabels(ctx, bandLeft, bandTop, plotWidth, plotHeight);
-        setHrHistoryCurrentPosition(latestPoint);
+        setHrHistoryCurrentPosition(latestPoint, getSessionElapsedSeconds(now));
     }
 
     function getHrHistoryVisibleStart(now) {
@@ -1250,23 +1250,47 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.shadowOffsetY = Math.max(1, hrHistoryDpr);
     }
 
-    function setHrHistoryCurrentPosition(point) {
-        if (!hrHistoryCurrentPoint || !hrHistoryCurrentLine || !hrHistoryCurrentDot) return;
+    function setHrHistoryCurrentPosition(point, sessionElapsedSeconds = 0) {
+        if (!hrHistoryCurrentPoint || !hrHistoryBadge || !hrHistoryBadgeText) return;
 
-        if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y) || !hrHistoryDpr) {
+        if (
+            !point
+            || !Number.isFinite(point.x)
+            || !Number.isFinite(point.y)
+            || !Number.isFinite(point.bpm)
+            || point.bpm === '--'
+            || point.bpm <= 0
+            || !isBluetoothConnected()
+            || !hrHistoryDpr
+        ) {
             hrHistoryCurrentPoint.classList.remove('is-visible');
             return;
         }
 
         const x = point.x / hrHistoryDpr;
         const y = point.y / hrHistoryDpr;
+        const badgeWidth = 60;
+        const badgeHeight = 30;
+        const arrowWidth = 10;
+        const placeOnRight = sessionElapsedSeconds <= 45 * 60;
+        const badgeLeft = placeOnRight ? x : x - badgeWidth;
+        const badgeTop = clamp(
+            y - (badgeHeight / 2),
+            0,
+            Math.max(0, hrHistoryCurrentPoint.getBoundingClientRect().height - badgeHeight)
+        );
+        const textCenterX = placeOnRight
+            ? badgeLeft + arrowWidth + ((badgeWidth - arrowWidth) / 2)
+            : badgeLeft + ((badgeWidth - arrowWidth) / 2);
+        const textCenterY = badgeTop + (badgeHeight / 2);
 
         hrHistoryCurrentPoint.classList.add('is-visible');
-        hrHistoryCurrentLine.style.left = `${x}px`;
-        hrHistoryCurrentDot.style.left = `${x}px`;
-        hrHistoryCurrentDot.style.top = `${y}px`;
-        hrHistoryCurrentLine.style.background = `rgba(var(--current-zone-color-rgb, 255, 255, 255), 0.22)`;
-        hrHistoryCurrentLine.style.boxShadow = `0 0 8px rgba(var(--current-zone-color-rgb, 255, 255, 255), 0.12)`;
+        hrHistoryBadge.classList.toggle('is-right-pointing', !placeOnRight);
+        hrHistoryBadge.style.left = `${badgeLeft}px`;
+        hrHistoryBadge.style.top = `${badgeTop}px`;
+        hrHistoryBadgeText.style.left = `${textCenterX - badgeLeft}px`;
+        hrHistoryBadgeText.style.top = `${textCenterY - badgeTop}px`;
+        hrHistoryBadgeText.textContent = String(Math.round(point.bpm));
     }
 
     function getZoneAreaFillColor(zoneId) {

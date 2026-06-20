@@ -440,40 +440,41 @@ body {
     opacity: 1;
 }
 
-.hr-history-current-line {
+.hr-history-badge {
     position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 1.5px;
-    margin-left: -0.75px;
-    border-radius: 999px;
-    background: rgba(var(--current-zone-color-rgb, 255, 255, 255), 0.22);
-    box-shadow: 0 0 8px rgba(var(--current-zone-color-rgb, 255, 255, 255), 0.12);
-    transition:
-        left 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
-        background-color 0.18s ease,
-        box-shadow 0.18s ease;
+    width: 60px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1;
+    background: #00d8ff;
+    box-shadow: none;
+    clip-path: polygon(0 15px, 10px 0, 60px 0, 60px 30px, 10px 30px);
+    transition: left 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
     will-change: left;
 }
 
-.hr-history-current-dot {
+.hr-history-badge.is-right-pointing {
+    clip-path: polygon(0 0, 50px 0, 60px 15px, 50px 30px, 0 30px);
+}
+
+.hr-history-badge-text {
     position: absolute;
-    width: 30px;
-    height: 30px;
-    margin-left: -15px;
-    margin-top: -15px;
-    border-radius: 50%;
-    background: var(--current-zone-color);
-    border: 2px solid rgba(12, 14, 20, 0.92);
-    box-shadow:
-        0 0 0 2px rgba(255, 255, 255, 0.12),
-        0 0 12px rgba(var(--current-zone-color-rgb, 255, 255, 255), 0.32);
-    transition:
-        left 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
-        top 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
-        background-color 0.18s ease,
-        box-shadow 0.18s ease;
-    will-change: left, top, transform;
+    top: 50%;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1;
+    white-space: nowrap;
+    transition: left 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+    will-change: left;
+    transform: translate(-50%, -50%);
 }
 
 .zone-summary-panel {
