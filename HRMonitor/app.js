@@ -177,6 +177,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const hrHistory = [];
     const HR_HISTORY_WINDOW_MS = 60 * 60 * 1000;
     const HR_GRAPH_PADDING = { top: 10, right: 8, bottom: 10, left: 8 };
+    const HR_HISTORY_TIME_MARKER_MINUTES = [5, 15, 30, 45, 53];
+    const HR_HISTORY_TIME_LABEL_MINUTES = [5, 15, 30, 45];
     let hrGraphRenderQueued = false;
     let hrHistoryAnimationFrame = null;
     let hrHistoryResizeObserver = null;
@@ -845,7 +847,6 @@ document.addEventListener('DOMContentLoaded', () => {
         drawHrHistoryTimeMarkers(ctx, bandLeft, bandTop, plotWidth, plotHeight);
         drawHrZoneBoundaryLines(ctx, bandLeft, bandTop, plotWidth, plotHeight);
         drawHrZoneThresholdLabels(ctx, bandLeft, bandTop, plotWidth, plotHeight);
-        drawHrHistoryOutline(ctx, segments);
         drawHrHistoryTimeLabels(ctx, bandLeft, bandTop, plotWidth, plotHeight);
         setHrHistoryCurrentPosition(latestPoint);
     }
@@ -921,41 +922,14 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.restore();
     }
 
-    function drawHrHistoryOutline(ctx, segments) {
-        if (!segments.length) return;
-
-        ctx.save();
-        ctx.lineJoin = 'round';
-        ctx.lineCap = 'round';
-
-        segments.forEach(segment => {
-            const segmentPoints = segment.points;
-            if (!segmentPoints.length) return;
-
-            ctx.beginPath();
-            ctx.moveTo(segmentPoints[0].x, segmentPoints[0].y);
-            for (let i = 1; i < segmentPoints.length; i++) {
-                ctx.lineTo(segmentPoints[i].x, segmentPoints[i].y);
-            }
-
-            ctx.lineWidth = Math.max(2.5, 2.5 * hrHistoryDpr);
-            ctx.strokeStyle = getZoneLineColor(segment.zoneId);
-            ctx.stroke();
-        });
-
-        ctx.restore();
-    }
-
     function drawHrHistoryTimeMarkers(ctx, left, top, width, height) {
-        const markerMinutes = [10, 20, 30, 40, 50];
-
         ctx.save();
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
         ctx.lineWidth = 1 * hrHistoryDpr;
         ctx.setLineDash([4 * hrHistoryDpr, 4 * hrHistoryDpr]);
         ctx.lineCap = 'round';
 
-        markerMinutes.forEach(minute => {
+        HR_HISTORY_TIME_MARKER_MINUTES.forEach(minute => {
             const x = getHrHistoryTimeMarkerX(left, width, minute);
             ctx.beginPath();
             ctx.moveTo(x, top);
@@ -967,7 +941,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function drawHrHistoryTimeLabels(ctx, left, top, width, height) {
-        const markerMinutes = [10, 20, 30, 40, 50];
         const redZoneTopY = top + (1 - (mapHeartRateToBarPosition(100) / 100)) * height;
         const redZoneBottomY = top + (1 - (mapHeartRateToBarPosition(80) / 100)) * height;
         const labelCenterY = redZoneTopY + ((redZoneBottomY - redZoneTopY) / 2);
@@ -982,7 +955,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.shadowBlur = Math.max(2, 2 * hrHistoryDpr);
         ctx.shadowOffsetY = Math.max(1, hrHistoryDpr);
 
-        markerMinutes.forEach(minute => {
+        HR_HISTORY_TIME_LABEL_MINUTES.forEach(minute => {
             const x = getHrHistoryTimeMarkerX(left, width, minute);
             ctx.fillText(String(minute), x, labelCenterY);
         });
