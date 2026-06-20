@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const APP_VERSION = window.APP_VERSION || '1.2.19';
+    const APP_VERSION = window.APP_VERSION || '1.2.20';
 
     // Register Service Worker for PWA Offline Support
     if ('serviceWorker' in navigator) {
@@ -705,6 +705,7 @@ document.addEventListener('DOMContentLoaded', () => {
         root.style.setProperty('--current-zone-color-rgb', ZONE_COLOR_RGB[zone.id]);
         root.style.setProperty('--flash-zone-rgb', FLASH_ZONE_RGB[zone.id] || FLASH_ZONE_RGB[0]);
         applyActiveZoneVisuals(zone.id);
+        applyHrHistoryBadgeTextColor(zone.id);
 
         // Track current zone for timer
         currentZoneId = zone.id;
@@ -732,6 +733,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setCardStatus(bluetoothDevice && bluetoothDevice.gatt && bluetoothDevice.gatt.connected ? 'Idle' : (isSessionRunning() ? 'Paused' : 'Waiting'));
         rootMutedState();
         applyActiveZoneVisuals(0);
+        applyHrHistoryBadgeTextColor(0);
 
         currentZoneId = 0;
         syncZoneTimerState(0);
@@ -748,6 +750,19 @@ document.addEventListener('DOMContentLoaded', () => {
         root.style.setProperty('--current-zone-color', 'var(--zone-0)');
         root.style.setProperty('--current-zone-color-rgb', '74, 85, 104');
         root.style.setProperty('--flash-zone-rgb', FLASH_ZONE_RGB[0]);
+    }
+
+    function applyHrHistoryBadgeTextColor(zoneId) {
+        const root = document.documentElement;
+        const badgeTextColorByZone = {
+            1: '#062A3A',
+            2: '#052E1A',
+            3: '#242000',
+            4: '#FFFFFF',
+            5: '#FFFFFF'
+        };
+
+        root.style.setProperty('--hr-history-badge-text-color', badgeTextColorByZone[zoneId] || '#FFFFFF');
     }
 
     function applyActiveZoneVisuals(zoneId) {

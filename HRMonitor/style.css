@@ -452,7 +452,7 @@ body {
     font-weight: 800;
     letter-spacing: 0;
     line-height: 1;
-    background: #00d8ff;
+    background: var(--current-zone-color);
     box-shadow: none;
     clip-path: polygon(0 15px, 10px 0, 60px 0, 60px 30px, 10px 30px);
     transition: left 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -466,7 +466,7 @@ body {
 .hr-history-badge-text {
     position: absolute;
     top: 50%;
-    color: #fff;
+    color: var(--hr-history-badge-text-color, #fff);
     font-size: 17px;
     font-weight: 800;
     letter-spacing: 0;
