@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const APP_VERSION = window.APP_VERSION || '1.2.11';
+    const APP_VERSION = window.APP_VERSION || '1.2.13';
 
     // Register Service Worker for PWA Offline Support
     if ('serviceWorker' in navigator) {
@@ -579,7 +579,6 @@ document.addEventListener('DOMContentLoaded', () => {
         root.style.setProperty('--current-zone-color', zone.color);
         root.style.setProperty('--current-zone-color-rgb', ZONE_COLOR_RGB[zone.id]);
         root.style.setProperty('--flash-zone-rgb', FLASH_ZONE_RGB[zone.id] || FLASH_ZONE_RGB[0]);
-        root.style.setProperty('--bpm-value-color', 'var(--current-zone-color)');
         applyActiveZoneVisuals(zone.id);
 
         // Track current zone for timer
@@ -608,7 +607,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setCardStatus(bluetoothDevice && bluetoothDevice.gatt && bluetoothDevice.gatt.connected ? 'Idle' : 'Waiting');
         rootMutedState();
         applyActiveZoneVisuals(0);
-        root.style.setProperty('--bpm-value-color', 'rgba(255, 255, 255, 0.92)');
 
         currentZoneId = 0;
         syncZoneTimerState(0);
@@ -944,16 +942,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const redZoneTopY = top + (1 - (mapHeartRateToBarPosition(100) / 100)) * height;
         const redZoneBottomY = top + (1 - (mapHeartRateToBarPosition(80) / 100)) * height;
         const labelCenterY = redZoneTopY + ((redZoneBottomY - redZoneTopY) / 2);
-        const fontSize = Math.max(8, Math.round(9 * hrHistoryDpr));
 
         ctx.save();
-        ctx.font = `700 ${fontSize}px 'Montserrat', sans-serif`;
+        applyHrHistoryLabelTextStyle(ctx, getHrHistoryZoneLabelFontSize());
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.90)';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.72)';
-        ctx.shadowBlur = Math.max(2, 2 * hrHistoryDpr);
-        ctx.shadowOffsetY = Math.max(1, hrHistoryDpr);
 
         HR_HISTORY_TIME_LABEL_MINUTES.forEach(minute => {
             const x = getHrHistoryTimeMarkerX(left, width, minute);
@@ -991,19 +984,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const boundaryPercents = [60, 70, 80];
         const rightInset = Math.max(8 * hrHistoryDpr, width * 0.03);
         const labelX = left + width - rightInset;
-        const fontSize = Math.max(11, Math.round(12 * hrHistoryDpr));
+        const fontSize = getHrHistoryZoneLabelFontSize();
         const redZoneTopY = top + (1 - (mapHeartRateToBarPosition(100) / 100)) * height;
         const redZoneBottomY = top + (1 - (mapHeartRateToBarPosition(80) / 100)) * height;
         const redZoneCenterY = redZoneTopY + ((redZoneBottomY - redZoneTopY) / 2);
 
         ctx.save();
-        ctx.font = `700 ${fontSize}px 'Montserrat', sans-serif`;
+        applyHrHistoryLabelTextStyle(ctx, fontSize);
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.90)';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.72)';
-        ctx.shadowBlur = Math.max(2, 2 * hrHistoryDpr);
-        ctx.shadowOffsetY = Math.max(1, hrHistoryDpr);
 
         boundaryPercents.forEach(percent => {
             const boundaryPosition = mapHeartRateToBarPosition(percent);
@@ -1025,6 +1014,18 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         ctx.restore();
+    }
+
+    function getHrHistoryZoneLabelFontSize() {
+        return Math.max(11, Math.round(12 * hrHistoryDpr));
+    }
+
+    function applyHrHistoryLabelTextStyle(ctx, fontSize) {
+        ctx.font = `700 ${fontSize}px 'Montserrat', sans-serif`;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.90)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.72)';
+        ctx.shadowBlur = Math.max(2, 2 * hrHistoryDpr);
+        ctx.shadowOffsetY = Math.max(1, hrHistoryDpr);
     }
 
     function setHrHistoryCurrentPosition(point) {
