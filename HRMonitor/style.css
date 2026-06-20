@@ -6,11 +6,11 @@
     --glass-bg: rgba(255, 255, 255, 0.03);
     --glass-border: rgba(255, 255, 255, 0.08);
     --page-background:
-        radial-gradient(circle at 50% 10%, rgba(var(--current-zone-color-rgb, 74, 85, 104), 0.16), transparent 32%),
+        radial-gradient(circle at 50% 10%, rgba(var(--flash-zone-rgb, 74, 85, 104), 0.16), transparent 32%),
         radial-gradient(circle at 50% 120%, rgba(0, 0, 0, 0.2), transparent 36%),
         linear-gradient(180deg, #111521 0%, #0b0d14 100%);
     --app-background:
-        radial-gradient(circle at 50% 0%, rgba(var(--current-zone-color-rgb, 74, 85, 104), 0.15) 0%, transparent 60%);
+        radial-gradient(circle at 50% 0%, rgba(var(--flash-zone-rgb, 74, 85, 104), 0.15) 0%, transparent 60%);
     
     /* Zone Colors (Shared palette across chart, gauge, and timers) */
     --zone-0: #4a5568; /* Disconnected/Idle */
@@ -69,7 +69,7 @@
     /* Active State Color (Transitions during app runtime) */
     --current-zone-color: var(--zone-0);
     --current-zone-color-rgb: 74, 85, 104;
-    --progress-fill-rgb: 74, 85, 104;
+    --flash-zone-rgb: 74, 85, 104;
     --bpm-value-color: rgba(255, 255, 255, 0.92);
     --zone-separator-color: rgba(255, 255, 255, 0.16);
     --bpm-font-size: 74px;
@@ -77,7 +77,6 @@
     --time-section-letter-spacing: 0.08em;
     --zone-timer-time-size: 18px;
     --zone-timer-percent-size: calc(var(--zone-timer-time-size) / 1.5);
-    --gauge-range-size: 16px;
 }
 
 html {
@@ -307,7 +306,7 @@ body {
 
 .workout-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 98px;
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.95rem;
     align-items: stretch;
     padding: 1rem;
@@ -321,374 +320,6 @@ body {
     flex-direction: column;
     min-height: 0;
     min-width: 0;
-}
-
-.workout-right {
-    min-width: 0;
-    padding-left: 0.95rem;
-    border-left: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.gauge-shell {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-width: 0;
-    gap: 0;
-}
-
-.zone-gauge {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    margin-top: 0;
-}
-
-.performance-meta {
-    font-size: inherit;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    color: rgba(255, 255, 255, 0.62);
-    white-space: nowrap;
-    text-align: right;
-    flex: 0 0 auto;
-}
-
-/* Heart Rate Zone Progress */
-.zone-progress-wrap {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: stretch;
-}
-
-.zone-progress-bar {
-    position: relative;
-    isolation: isolate;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: stretch;
-    border-radius: 28px;
-    overflow: hidden;
-}
-
-.zone-progress-track {
-    position: relative;
-    display: flex;
-    flex-direction: column-reverse;
-    width: 100%;
-    height: 100%;
-    min-height: 0;
-    border-radius: 28px;
-    overflow: hidden;
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.22);
-}
-
-.zone-progress-fill {
-    position: absolute;
-    inset: auto 0 0 0;
-    width: 100%;
-    height: 0%;
-    z-index: 1;
-    overflow: hidden;
-    isolation: isolate;
-    border-radius: 0;
-    background-color: rgba(var(--progress-fill-rgb, 74, 85, 104), 0.88);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.22),
-        0 0 18px rgba(var(--progress-fill-rgb, 74, 85, 104), 0.34);
-    transition: height 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.28s ease, box-shadow 0.28s ease;
-    will-change: height, background-color;
-}
-
-.zone-progress-fill::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    border-radius: inherit;
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05) 42%, rgba(0, 0, 0, 0.1));
-    opacity: 0.9;
-    pointer-events: none;
-}
-
-.zone-progress-bubbles {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    overflow: hidden;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.28s ease;
-}
-
-.zone-progress-bubble {
-    --bubble-left: 50%;
-    --bubble-size: 0.72rem;
-    --bubble-drift: 0rem;
-    --bubble-duration: 6s;
-    --bubble-delay: 0s;
-    position: absolute;
-    left: var(--bubble-left);
-    bottom: -16%;
-    width: var(--bubble-size);
-    height: var(--bubble-size);
-    border-radius: 50%;
-    opacity: 0;
-    pointer-events: none;
-    transform: translate3d(-50%, 0, 0) scale(0.72);
-    background:
-        radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.34) 0, rgba(255, 255, 255, 0.18) 24%, rgba(var(--active-zone-rgb), 0.16) 52%, rgba(var(--active-zone-rgb), 0) 74%);
-    box-shadow:
-        inset 0 0 0 1px rgba(255, 255, 255, 0.12),
-        0 0 12px rgba(var(--active-zone-rgb), 0.18),
-        0 0 24px rgba(var(--active-zone-rgb), 0.12);
-    animation: progress-bubble-rise var(--bubble-duration) ease-in infinite;
-    animation-delay: var(--bubble-delay);
-    animation-play-state: paused;
-    will-change: transform, opacity;
-}
-
-.bubble-1 {
-    --bubble-left: 12%;
-    --bubble-size: 0.46rem;
-    --bubble-drift: -0.22rem;
-    --bubble-duration: 5.4s;
-    --bubble-delay: -0.8s;
-}
-
-.bubble-2 {
-    --bubble-left: 24%;
-    --bubble-size: 0.7rem;
-    --bubble-drift: 0.26rem;
-    --bubble-duration: 6.3s;
-    --bubble-delay: -3.1s;
-}
-
-.bubble-3 {
-    --bubble-left: 39%;
-    --bubble-size: 0.56rem;
-    --bubble-drift: -0.18rem;
-    --bubble-duration: 4.9s;
-    --bubble-delay: -2.4s;
-}
-
-.bubble-4 {
-    --bubble-left: 52%;
-    --bubble-size: 0.82rem;
-    --bubble-drift: 0.18rem;
-    --bubble-duration: 6.8s;
-    --bubble-delay: -4.2s;
-}
-
-.bubble-5 {
-    --bubble-left: 67%;
-    --bubble-size: 0.5rem;
-    --bubble-drift: -0.28rem;
-    --bubble-duration: 5.7s;
-    --bubble-delay: -1.7s;
-}
-
-.bubble-6 {
-    --bubble-left: 81%;
-    --bubble-size: 0.76rem;
-    --bubble-drift: 0.22rem;
-    --bubble-duration: 6.1s;
-    --bubble-delay: -3.8s;
-}
-
-.bubble-7 {
-    --bubble-left: 91%;
-    --bubble-size: 0.42rem;
-    --bubble-drift: -0.14rem;
-    --bubble-duration: 5.1s;
-    --bubble-delay: -2.1s;
-}
-
-@keyframes progress-bubble-rise {
-    0% {
-        opacity: 0;
-        transform: translate3d(-50%, 0, 0) scale(0.7);
-    }
-
-    14% {
-        opacity: 0.34;
-    }
-
-    55% {
-        opacity: 0.22;
-        transform: translate3d(calc(-50% + (var(--bubble-drift) * 0.7)), -48%, 0) scale(0.92);
-    }
-
-    100% {
-        opacity: 0;
-        transform: translate3d(calc(-50% + var(--bubble-drift)), -108%, 0) scale(1.14);
-    }
-}
-
-.zone-progress-separators {
-    position: absolute;
-    inset: 0;
-    z-index: 3;
-    pointer-events: none;
-}
-
-.zone-progress-separator {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: var(--separator-top, 50%);
-    height: 1px;
-    transform: translateY(-0.5px);
-    background-image: repeating-linear-gradient(
-        to right,
-        var(--zone-separator-color) 0 4px,
-        transparent 4px 8px
-    );
-}
-
-.zone-progress-segment {
-    position: relative;
-    z-index: 2;
-    flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 0;
-    width: 100%;
-    padding: clamp(0.06rem, 0.2vw, 0.16rem) clamp(0.08rem, 0.32vw, 0.22rem);
-}
-
-.zone-progress-label {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    z-index: 4;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: max-content;
-    padding: 0.08rem 0.34rem;
-    text-align: center;
-    pointer-events: none;
-    color: rgba(255, 255, 255, 0.82);
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    line-height: 1;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.56);
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    border-radius: 999px;
-    background: rgba(10, 12, 18, 0.34);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
-    backdrop-filter: blur(3px);
-    transform: translate(-50%, -50%);
-}
-
-.zone-45 .zone-progress-label {
-    top: clamp(0.38rem, 0.95vw, 0.7rem);
-    transform: translateX(-50%);
-}
-
-.gauge-range-value {
-    display: block;
-    font-size: var(--gauge-range-size);
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: -0.05em;
-    color: rgba(255, 255, 255, 0.82);
-    opacity: 1;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.56);
-    font-family: 'Montserrat', sans-serif;
-    font-variant-numeric: tabular-nums;
-    min-height: 0.9em;
-}
-
-.zone-1 {
-    flex-basis: 15%;
-    background-color: var(--chart-zone-1-band);
-    background-image: none;
-}
-
-.zone-2 {
-    flex-basis: 50%;
-    background-color: var(--chart-zone-2-band);
-    background-image: none;
-}
-
-.zone-3 {
-    flex-basis: 20%;
-    background-color: var(--chart-zone-3-band);
-    background-image: none;
-}
-
-.zone-45 {
-    flex-basis: 15%;
-    background-color: var(--chart-zone-4-band);
-    background-image: none;
-}
-
-.zone-progress-segment::before {
-    content: none;
-}
-
-.zone-progress-bar[data-active-zone="1"] .zone-progress-fill,
-.zone-progress-bar[data-active-zone="2"] .zone-progress-fill,
-.zone-progress-bar[data-active-zone="3"] .zone-progress-fill,
-.zone-progress-bar[data-active-zone="45"] .zone-progress-fill {
-    background-color: var(--active-zone-bg);
-    border-top: 1px solid var(--active-zone-highlight);
-    box-shadow:
-        inset 0 1px 0 var(--active-zone-highlight),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.12),
-        inset 0 0 14px var(--active-zone-bg-strong),
-        0 0 0 1px rgba(var(--active-zone-rgb), 0.18),
-        0 0 18px var(--active-zone-glow),
-        0 0 30px var(--active-zone-glow-strong);
-}
-
-.zone-progress-bar[data-active-zone="1"] .zone-progress-fill::after,
-.zone-progress-bar[data-active-zone="2"] .zone-progress-fill::after,
-.zone-progress-bar[data-active-zone="3"] .zone-progress-fill::after,
-.zone-progress-bar[data-active-zone="45"] .zone-progress-fill::after {
-    opacity: 1;
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.07) 38%, rgba(255, 255, 255, 0.02));
-}
-
-.zone-progress-bar[data-active-zone="1"] .zone-progress-bubbles,
-.zone-progress-bar[data-active-zone="2"] .zone-progress-bubbles,
-.zone-progress-bar[data-active-zone="3"] .zone-progress-bubbles,
-.zone-progress-bar[data-active-zone="45"] .zone-progress-bubbles {
-    opacity: 0.9;
-}
-
-.zone-progress-bar[data-active-zone="1"] .zone-progress-bubble,
-.zone-progress-bar[data-active-zone="2"] .zone-progress-bubble,
-.zone-progress-bar[data-active-zone="3"] .zone-progress-bubble,
-.zone-progress-bar[data-active-zone="45"] .zone-progress-bubble {
-    animation-play-state: running;
-}
-
-.zone-progress-bar[data-active-zone="none"] .zone-progress-segment {
-    opacity: 1;
-    filter: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .zone-progress-bubbles {
-        opacity: 0;
-        transition: none;
-    }
-
-    .zone-progress-bubble {
-        animation: none;
-        opacity: 0;
-    }
 }
 
 /* Connection Status */
@@ -990,7 +621,7 @@ body {
     }
 
     .workout-layout {
-        grid-template-columns: minmax(0, 1fr) 74px;
+        grid-template-columns: minmax(0, 1fr);
         gap: 0.75rem;
         padding: 0.85rem;
     }
@@ -1030,18 +661,6 @@ body {
         border-radius: 14px;
     }
 
-    .zone-progress-segment {
-        padding: clamp(0.04rem, 0.16vw, 0.1rem) clamp(0.05rem, 0.22vw, 0.12rem);
-    }
-
-    .zone-progress-label {
-        padding: 0.06rem 0.28rem;
-    }
-
-    .zone-45 .zone-progress-label {
-        top: clamp(0.3rem, 0.9vw, 0.56rem);
-    }
-
     .header-connect-btn {
         height: 2.6rem;
         padding: 0 0.9rem;
@@ -1073,10 +692,7 @@ body {
         overflow: hidden;
     }
 
-    .workout-left,
-    .workout-right,
-    .gauge-shell,
-    .zone-gauge {
+    .workout-left {
         min-height: 0;
         height: 100%;
     }
@@ -1098,11 +714,11 @@ body {
 @media (orientation: landscape) {
     :root {
         --page-background:
-            radial-gradient(ellipse at center left, rgba(var(--current-zone-color-rgb, 74, 85, 104), 0.14) 0%, transparent 34%),
+            radial-gradient(ellipse at center left, rgba(var(--flash-zone-rgb, 74, 85, 104), 0.14) 0%, transparent 34%),
             radial-gradient(ellipse at center right, rgba(0, 0, 0, 0.18) 0%, transparent 46%),
             linear-gradient(90deg, #111521 0%, #0b0d14 100%);
         --app-background:
-            radial-gradient(ellipse at center left, rgba(var(--current-zone-color-rgb, 74, 85, 104), 0.13) 0%, transparent 58%);
+            radial-gradient(ellipse at center left, rgba(var(--flash-zone-rgb, 74, 85, 104), 0.13) 0%, transparent 58%);
     }
 
     html,
@@ -1129,8 +745,7 @@ body {
         display: grid;
         grid-template-columns:
             minmax(180px, 0.9fr)
-            minmax(0, 2fr)
-            90px
+            minmax(0, 2.5fr)
             100px;
         grid-template-rows: auto minmax(0, 1fr);
         column-gap: 0.45rem;
@@ -1146,14 +761,11 @@ body {
     }
 
     .workout-layout {
-        grid-column: 1 / 4;
+        grid-column: 1 / 3;
         grid-row: 2;
         display: grid;
-        grid-template-columns:
-            minmax(180px, 0.9fr)
-            minmax(0, 2fr)
-            90px;
-        grid-template-rows: auto minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr);
         min-height: 0;
         padding: 0.45rem;
         column-gap: 0.42rem;
@@ -1163,20 +775,14 @@ body {
 
     .workout-left {
         display: grid;
-        grid-column: 1 / 3;
-        grid-row: 1 / 3;
+        grid-column: 1;
+        grid-row: 1;
         grid-template-columns: minmax(180px, 0.9fr) minmax(0, 2fr);
         grid-template-rows: auto minmax(0, 1fr);
         column-gap: 0.42rem;
         row-gap: 0.16rem;
         min-height: 0;
         min-width: 0;
-    }
-
-    .workout-right {
-        grid-column: 3;
-        grid-row: 1 / 3;
-        padding-left: 0.42rem;
     }
 
     .glass-panel {
@@ -1243,7 +849,7 @@ body {
     }
 
     .zone-summary-panel {
-        grid-column: 4;
+        grid-column: 3;
         grid-row: 2;
         display: flex;
         min-height: 0;
@@ -1266,24 +872,6 @@ body {
         min-height: 0;
         padding: 0.1rem 0.06rem;
         border-radius: 12px;
-    }
-
-    .gauge-shell,
-    .zone-gauge,
-    .zone-progress-wrap,
-    .zone-progress-bar,
-    .zone-progress-track {
-        min-height: 0;
-    }
-
-    .zone-progress-bar,
-    .zone-progress-track {
-        border-radius: 22px;
-    }
-
-    .zone-progress-label {
-        padding: 0.04rem 0.18rem;
-        max-width: calc(100% - 0.2rem);
     }
 
     .zone-timer-item .zt-time,

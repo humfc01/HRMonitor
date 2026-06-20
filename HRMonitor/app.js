@@ -18,8 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const connectBtn = document.getElementById('connectBtn');
     const bpmValue = document.getElementById('bpmValue');
     const bpmStatusText = document.getElementById('bpmStatusText');
-    const zoneProgressBar = document.getElementById('zoneProgressBar');
-    const zoneProgressFill = document.getElementById('zoneProgressFill');
     const mhrDisplay = document.getElementById('mhrDisplay');
     const statusText = document.getElementById('statusText');
     const statusDot = document.getElementById('statusDot');
@@ -30,13 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const hrHistoryCurrentPoint = document.getElementById('hrHistoryCurrentPoint');
     const hrHistoryCurrentLine = document.getElementById('hrHistoryCurrentLine');
     const hrHistoryCurrentDot = document.getElementById('hrHistoryCurrentDot');
-    const zoneProgressSeparatorEls = Array.from(document.querySelectorAll('.zone-progress-separator'));
-    const zoneProgressLabelEls = {
-        1: document.getElementById('zone1Max'),
-        2: document.getElementById('zone2Max'),
-        3: document.getElementById('zone3Max'),
-        45: document.getElementById('zone45Max')
-    };
     
     // Settings Elements
     const settingsBtn = document.getElementById('settingsBtn');
@@ -156,6 +147,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const FLASH_ZONE_RGB = {
+        0: '74, 85, 104',
+        1: ZONE_COLOR_RGB[1],
+        2: ZONE_COLOR_RGB[1],
+        3: ZONE_COLOR_RGB[1],
+        4: ZONE_COLOR_RGB[4],
+        5: ZONE_COLOR_RGB[4]
+    };
+
     // Bluetooth Service UUIDs (Standard)
     const HR_SERVICE = 'heart_rate';
     const HR_MEASUREMENT = 'heart_rate_measurement';
@@ -188,8 +188,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (customMhr) customMhrInput.value = customMhr;
     setConnectButtonLabel('Connect HR Device');
     updateMhrDisplay();
-    updateZoneProgressLabels();
-    syncZoneProgressSeparators();
     applyZoneBandVariables();
     if (appVersion) {
         appVersion.textContent = `v${APP_VERSION}`;
@@ -215,8 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         mhr = calculateMHR();
         updateMhrDisplay();
-        updateZoneProgressLabels();
-        syncZoneProgressSeparators();
         if (lastHeartRate !== null) {
             calculateZone(lastHeartRate);
             scheduleHrHistoryRender();
@@ -385,38 +381,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function updateZoneProgressLabels() {
-        const ranges = {
-            1: 60,
-            2: 70,
-            3: 80,
-            45: 100
-        };
-
-        Object.entries(ranges).forEach(([zoneId, percent]) => {
-            const target = zoneProgressLabelEls[zoneId];
-            if (!target) return;
-
-            target.textContent = String(Math.round((percent / 100) * mhr));
-        });
-    }
-
     function getZoneBoundaryBarPositions() {
         return ZONE_BOUNDARY_PERCENTS.map(percent => ({
             percent,
             barPosition: mapHeartRateToBarPosition(percent)
         }));
-    }
-
-    function syncZoneProgressSeparators() {
-        const boundaryPositions = getZoneBoundaryBarPositions();
-
-        zoneProgressSeparatorEls.forEach((separatorEl, index) => {
-            const boundary = boundaryPositions[index];
-            if (!boundary) return;
-
-            separatorEl.style.setProperty('--separator-top', `${100 - boundary.barPosition}%`);
-        });
     }
 
     function updateStatus(message, isConnected) {
@@ -607,18 +576,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const root = document.documentElement;
         root.style.setProperty('--current-zone-color', zone.color);
         root.style.setProperty('--current-zone-color-rgb', ZONE_COLOR_RGB[zone.id]);
-        root.style.setProperty('--progress-fill-rgb', ZONE_FILL_RGB[zone.id]);
+        root.style.setProperty('--flash-zone-rgb', FLASH_ZONE_RGB[zone.id] || FLASH_ZONE_RGB[0]);
         root.style.setProperty('--bpm-value-color', 'var(--current-zone-color)');
         applyActiveZoneVisuals(zone.id);
-
-        if (zoneProgressBar) {
-            zoneProgressBar.dataset.activeZone = zone.id >= 4 ? '45' : String(zone.id);
-        }
-
-        const visualPercentage = mapHeartRateToBarPosition(percentage);
-        if (zoneProgressFill) {
-            zoneProgressFill.style.height = `${visualPercentage}%`;
-        }
 
         // Track current zone for timer
         currentZoneId = zone.id;
@@ -646,15 +606,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setCardStatus(bluetoothDevice && bluetoothDevice.gatt && bluetoothDevice.gatt.connected ? 'Idle' : 'Waiting');
         rootMutedState();
         applyActiveZoneVisuals(0);
-        root.style.setProperty('--progress-fill-rgb', '74, 85, 104');
         root.style.setProperty('--bpm-value-color', 'rgba(255, 255, 255, 0.92)');
-        if (zoneProgressFill) {
-            zoneProgressFill.style.height = '0%';
-        }
-
-        if (zoneProgressBar) {
-            zoneProgressBar.dataset.activeZone = 'none';
-        }
 
         currentZoneId = 0;
         syncZoneTimerState(0);
@@ -668,6 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const root = document.documentElement;
         root.style.setProperty('--current-zone-color', 'var(--zone-0)');
         root.style.setProperty('--current-zone-color-rgb', '74, 85, 104');
+        root.style.setProperty('--flash-zone-rgb', FLASH_ZONE_RGB[0]);
     }
 
     function applyActiveZoneVisuals(zoneId) {
@@ -830,6 +783,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setHrHistoryCurrentPosition(null);
             drawHrHistoryTimeMarkers(ctx, bandLeft, bandTop, plotWidth, plotHeight);
             drawHrZoneBoundaryLines(ctx, bandLeft, bandTop, plotWidth, plotHeight);
+            drawHrZoneThresholdLabels(ctx, bandLeft, bandTop, plotWidth, plotHeight);
             drawHrHistoryTimeLabels(ctx, bandLeft, bandTop, plotWidth, plotHeight);
             return;
         }
@@ -842,6 +796,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setHrHistoryCurrentPosition(null);
             drawHrHistoryTimeMarkers(ctx, bandLeft, bandTop, plotWidth, plotHeight);
             drawHrZoneBoundaryLines(ctx, bandLeft, bandTop, plotWidth, plotHeight);
+            drawHrZoneThresholdLabels(ctx, bandLeft, bandTop, plotWidth, plotHeight);
             drawHrHistoryTimeLabels(ctx, bandLeft, bandTop, plotWidth, plotHeight);
             return;
         }
@@ -889,6 +844,7 @@ document.addEventListener('DOMContentLoaded', () => {
         drawHrHistoryAreaSegments(ctx, segments, bandBottom);
         drawHrHistoryTimeMarkers(ctx, bandLeft, bandTop, plotWidth, plotHeight);
         drawHrZoneBoundaryLines(ctx, bandLeft, bandTop, plotWidth, plotHeight);
+        drawHrZoneThresholdLabels(ctx, bandLeft, bandTop, plotWidth, plotHeight);
         drawHrHistoryOutline(ctx, segments);
         drawHrHistoryTimeLabels(ctx, bandLeft, bandTop, plotWidth, plotHeight);
         setHrHistoryCurrentPosition(latestPoint);
@@ -1053,6 +1009,37 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.moveTo(left, y);
             ctx.lineTo(left + width, y);
             ctx.stroke();
+        });
+
+        ctx.restore();
+    }
+
+    function drawHrZoneThresholdLabels(ctx, left, top, width, height) {
+        const boundaryPercents = [60, 70, 80, 100];
+        const rightInset = Math.max(8 * hrHistoryDpr, width * 0.03);
+        const labelX = left + width - rightInset;
+        const fontSize = Math.max(9, Math.round(10 * hrHistoryDpr));
+
+        ctx.save();
+        ctx.font = `700 ${fontSize}px 'Montserrat', sans-serif`;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.52)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.58)';
+        ctx.shadowBlur = Math.max(2, 2 * hrHistoryDpr);
+        ctx.shadowOffsetY = Math.max(1, hrHistoryDpr);
+
+        boundaryPercents.forEach((percent, index) => {
+            const boundaryPosition = mapHeartRateToBarPosition(percent);
+            const boundaryY = top + (1 - (boundaryPosition / 100)) * height;
+            const labelY = clamp(
+                boundaryY + (index === boundaryPercents.length - 1 ? fontSize * 0.7 : -fontSize * 0.7),
+                top + (fontSize * 0.9),
+                top + height - (fontSize * 0.9)
+            );
+            const bpmLabel = Math.round((percent / 100) * mhr);
+
+            ctx.fillText(String(bpmLabel), labelX, labelY);
         });
 
         ctx.restore();
