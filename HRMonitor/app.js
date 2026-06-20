@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // DOM Elements
     const connectBtn = document.getElementById('connectBtn');
-    const resetBtn = document.getElementById('resetBtn');
     const bpmValue = document.getElementById('bpmValue');
     const bpmStatusText = document.getElementById('bpmStatusText');
     const mhrDisplay = document.getElementById('mhrDisplay');
@@ -346,16 +345,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    if (resetBtn) {
-        resetBtn.addEventListener('click', async () => {
-            if (!await confirmWorkoutReset()) {
-                return;
-            }
-
-            resetWorkoutSession();
-        });
-    }
-
     // --- Wake Lock API ---
     let wakeLock = null;
     async function requestWakeLock() {
@@ -554,21 +543,6 @@ document.addEventListener('DOMContentLoaded', () => {
             cancelValue: true,
             danger: true,
             cancelDanger: false
-        });
-    }
-
-    function confirmWorkoutReset() {
-        if (!hasActiveWorkout() && !hasSavedSessionState()) {
-            return Promise.resolve(false);
-        }
-
-        return confirmAction({
-            title: 'Reset workout?',
-            message: isBluetoothConnected()
-                ? 'Clear this workout session and saved progress? The heart rate monitor connection will stay active.'
-                : 'Clear this workout session and saved progress? You can reconnect later and start fresh.',
-            confirmLabel: 'Reset',
-            danger: true
         });
     }
 
@@ -1471,31 +1445,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (clearSession) {
             sessionStart = null;
         }
-    }
-
-    function resetWorkoutSession() {
-        stopTimer();
-        sessionStart = null;
-        currentZoneId = 0;
-        lastHeartRate = null;
-        clearHrHistory();
-        resetZoneTimerState();
-        resetWorkoutStats();
-        clearSavedSessionState();
-        setNoHeartRateState();
-        sessionTimerEl.textContent = '00:00';
-        updateZoneSummaryDisplay(0);
-
-        if (isBluetoothConnected()) {
-            beginNewSession();
-            updateStatus(`Connected: ${bluetoothDevice.name || 'HR Monitor'}`, true);
-            setCardStatus('Idle');
-            return;
-        }
-
-        resetBackButtonGuard();
-        updateStatus('Disconnected', false);
-        setCardStatus('Waiting');
     }
 
     function updateZoneTimerDisplay(zoneId) {
