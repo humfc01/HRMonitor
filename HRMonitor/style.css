@@ -472,10 +472,10 @@ body {
 
 .hr-history-current-dot {
     position: absolute;
-    width: 20px;
-    height: 20px;
-    margin-left: -10px;
-    margin-top: -10px;
+    width: 30px;
+    height: 30px;
+    margin-left: -15px;
+    margin-top: -15px;
     border-radius: 50%;
     background: var(--current-zone-color);
     border: 2px solid rgba(12, 14, 20, 0.92);
@@ -954,6 +954,53 @@ body {
 
 .confirm-actions .sm-btn {
     flex: 1;
+    min-width: 0;
+}
+
+.dialog-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    border-radius: 100px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    white-space: nowrap;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    backdrop-filter: blur(10px);
+    min-height: 3.25rem;
+}
+
+.dialog-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.dialog-btn:active {
+    transform: translateY(1px);
+}
+
+.dialog-btn:focus,
+.dialog-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08), 0 0 0 4px rgba(0, 210, 255, 0.26);
+}
+
+.dialog-btn-danger {
+    background: linear-gradient(135deg, rgba(255, 82, 82, 0.28) 0%, rgba(255, 82, 82, 0.16) 100%);
+    border-color: rgba(255, 82, 82, 0.35);
+}
+
+.dialog-btn-danger:hover {
+    background: linear-gradient(135deg, rgba(255, 82, 82, 0.38) 0%, rgba(255, 82, 82, 0.22) 100%);
 }
 
 .form-group {
@@ -996,46 +1043,8 @@ body {
     font-size: 1rem;
 }
 
-.secondary-btn {
-    width: 100%;
-    padding: 1rem 1.5rem;
-    border-radius: 100px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-primary);
-    font-size: 1.1rem;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 0.75rem;
-    backdrop-filter: blur(10px);
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-}
-
-.secondary-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-}
-
-.secondary-btn:active {
-    transform: translateY(1px);
-}
-
-.danger-btn {
-    background: linear-gradient(135deg, rgba(255, 82, 82, 0.28) 0%, rgba(255, 82, 82, 0.16) 100%);
-    border-color: rgba(255, 82, 82, 0.35);
-}
-
-.danger-btn:hover {
-    background: linear-gradient(135deg, rgba(255, 82, 82, 0.38) 0%, rgba(255, 82, 82, 0.22) 100%);
-}
-
 @media (max-width: 480px) {
     .confirm-actions {
-        flex-direction: column-reverse;
+        gap: 0.5rem;
     }
 }

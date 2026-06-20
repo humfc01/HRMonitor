@@ -237,22 +237,28 @@ document.addEventListener('DOMContentLoaded', () => {
     confirmWorkoutEndBtn.addEventListener('click', async () => {
         if (workoutEndPromptResolver) {
             const resolve = workoutEndPromptResolver;
+            const result = workoutConfirmAction && Object.prototype.hasOwnProperty.call(workoutConfirmAction, 'confirmValue')
+                ? workoutConfirmAction.confirmValue
+                : true;
             workoutEndPromptResolver = null;
             workoutEndPromptPromise = null;
             workoutConfirmAction = null;
             hideWorkoutConfirmModal();
-            resolve(true);
+            resolve(result);
         }
     });
 
     cancelWorkoutEndBtn.addEventListener('click', () => {
         if (workoutEndPromptResolver) {
             const resolve = workoutEndPromptResolver;
+            const result = workoutConfirmAction && Object.prototype.hasOwnProperty.call(workoutConfirmAction, 'cancelValue')
+                ? workoutConfirmAction.cancelValue
+                : false;
             workoutEndPromptResolver = null;
             workoutEndPromptPromise = null;
             workoutConfirmAction = null;
             hideWorkoutConfirmModal();
-            resolve(false);
+            resolve(result);
         }
     });
 
@@ -276,10 +282,12 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const hasExistingSession = hasSavedSessionState() || isSessionRunning();
             if (hasExistingSession) {
-                const continueSession = await confirmResumeOrStartNewSession();
-                if (!continueSession) {
+                const shouldContinueSession = await confirmResumeOrStartNewSession();
+                if (!shouldContinueSession) {
                     startFreshSession();
                 }
+            } else {
+                startFreshSession();
             }
 
             detachHeartRateCharacteristicListener();
@@ -511,7 +519,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         confirmWorkoutEndBtn.textContent = options.confirmLabel;
-        confirmWorkoutEndBtn.classList.toggle('danger-btn', Boolean(options.danger));
+        confirmWorkoutEndBtn.classList.toggle('dialog-btn-danger', Boolean(options.danger));
+        cancelWorkoutEndBtn.textContent = options.cancelLabel || 'Cancel';
+        cancelWorkoutEndBtn.classList.toggle('dialog-btn-danger', Boolean(options.cancelDanger));
         showWorkoutConfirmModal();
 
         workoutEndPromptPromise = new Promise(resolve => {
@@ -537,9 +547,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function confirmResumeOrStartNewSession() {
         return confirmAction({
             title: 'Continue session?',
-            message: 'A saved workout session was found. Continue it, or start a new session and clear the old data?',
-            confirmLabel: 'Continue Session',
-            danger: false
+            message: 'A saved workout session was found. Start a new session or continue the existing session.',
+            confirmLabel: 'New Session',
+            cancelLabel: 'Continue Session',
+            confirmValue: false,
+            cancelValue: true,
+            danger: true,
+            cancelDanger: false
         });
     }
 
@@ -592,6 +606,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         disconnectInProgress = true;
+        bpmValue.textContent = '--';
+        lastHeartRate = null;
 
         try {
             if (heartRateCharacteristic) {
