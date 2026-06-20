@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const APP_VERSION = window.APP_VERSION || '1.2.13';
+    const APP_VERSION = window.APP_VERSION || '1.2.15';
 
     // Register Service Worker for PWA Offline Support
     if ('serviceWorker' in navigator) {
@@ -174,8 +174,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let backGuardArmed = false;
     let allowBackExit = false;
     let confirmDialogOpen = false;
-    const hrHistory = [];
+    const hrHistoryRealtimeSamples = [];
+    const hrHistoryAggregatedBuckets = [];
+    let hrHistoryTransitionBucket = null;
     const HR_HISTORY_WINDOW_MS = 60 * 60 * 1000;
+    const HR_HISTORY_REALTIME_WINDOW_MS = 30 * 1000;
+    const HR_HISTORY_BUCKET_MS = 30 * 1000;
     const HR_GRAPH_PADDING = { top: 10, right: 8, bottom: 10, left: 8 };
     const HR_HISTORY_TIME_MARKER_MINUTES = [5, 15, 30, 45, 53];
     const HR_HISTORY_TIME_LABEL_MINUTES = [5, 15, 30, 45];
@@ -612,7 +616,9 @@ document.addEventListener('DOMContentLoaded', () => {
         syncZoneTimerState(0);
         updateHrHistoryEmptyState();
         setHrHistoryCurrentPosition(null);
-        stopHrHistoryAnimation();
+        if (!hasHrHistoryData()) {
+            stopHrHistoryAnimation();
+        }
         scheduleHrHistoryRender();
     }
 
@@ -690,20 +696,157 @@ document.addEventListener('DOMContentLoaded', () => {
             zoneId: zoneId || currentZoneId || 0
         };
 
-        hrHistory.push(sample);
-        pruneHrHistory();
+        hrHistoryRealtimeSamples.push(sample);
+        reconcileHrHistoryData(sample.timestamp);
         updateHrHistoryEmptyState();
         scheduleHrHistoryRender();
     }
 
-    function pruneHrHistory(now = Date.now()) {
-        while (hrHistory.length && now - hrHistory[0].timestamp > HR_HISTORY_WINDOW_MS) {
-            hrHistory.shift();
+    function getHrHistoryBucketStart(timestamp) {
+        return Math.floor(timestamp / HR_HISTORY_BUCKET_MS) * HR_HISTORY_BUCKET_MS;
+    }
+
+    function getHrHistoryBucketEnd(timestamp) {
+        return getHrHistoryBucketStart(timestamp) + HR_HISTORY_BUCKET_MS;
+    }
+
+    function mergeHrHistoryBucketSample(target, sample, bucketStart, bucketEnd) {
+        if (!target || sample.bpm > target.bpm || (sample.bpm === target.bpm && sample.timestamp > target.timestamp)) {
+            return {
+                timestamp: sample.timestamp,
+                bpm: sample.bpm,
+                zoneId: sample.zoneId,
+                bucketStart,
+                bucketEnd
+            };
+        }
+
+        return target;
+    }
+
+    function appendOrUpdateAggregatedBucket(bucket) {
+        const lastBucket = hrHistoryAggregatedBuckets[hrHistoryAggregatedBuckets.length - 1];
+
+        if (lastBucket && lastBucket.bucketEnd === bucket.bucketEnd) {
+            hrHistoryAggregatedBuckets[hrHistoryAggregatedBuckets.length - 1] = mergeHrHistoryBucketSample(
+                lastBucket,
+                bucket,
+                bucket.bucketStart,
+                bucket.bucketEnd
+            );
+            return;
+        }
+
+        hrHistoryAggregatedBuckets.push(bucket);
+    }
+
+    function reconcileHrHistoryData(now = Date.now()) {
+        const completedThrough = now - HR_HISTORY_REALTIME_WINDOW_MS;
+
+        while (hrHistoryRealtimeSamples.length && hrHistoryRealtimeSamples[0].timestamp < completedThrough) {
+            const sample = hrHistoryRealtimeSamples.shift();
+            const bucketStart = getHrHistoryBucketStart(sample.timestamp);
+            const bucketEnd = getHrHistoryBucketEnd(sample.timestamp);
+
+            if (bucketEnd <= completedThrough) {
+                appendOrUpdateAggregatedBucket(
+                    mergeHrHistoryBucketSample(
+                        hrHistoryAggregatedBuckets[hrHistoryAggregatedBuckets.length - 1]?.bucketEnd === bucketEnd
+                            ? hrHistoryAggregatedBuckets[hrHistoryAggregatedBuckets.length - 1]
+                            : null,
+                        sample,
+                        bucketStart,
+                        bucketEnd
+                    )
+                );
+                continue;
+            }
+
+            if (!hrHistoryTransitionBucket || hrHistoryTransitionBucket.bucketEnd !== bucketEnd) {
+                if (hrHistoryTransitionBucket) {
+                    appendOrUpdateAggregatedBucket(hrHistoryTransitionBucket);
+                }
+
+                hrHistoryTransitionBucket = mergeHrHistoryBucketSample(null, sample, bucketStart, bucketEnd);
+                continue;
+            }
+
+            hrHistoryTransitionBucket = mergeHrHistoryBucketSample(
+                hrHistoryTransitionBucket,
+                sample,
+                bucketStart,
+                bucketEnd
+            );
+        }
+
+        if (hrHistoryTransitionBucket && hrHistoryTransitionBucket.bucketEnd <= completedThrough) {
+            appendOrUpdateAggregatedBucket(hrHistoryTransitionBucket);
+            hrHistoryTransitionBucket = null;
+        }
+
+        pruneHrHistoryData(now);
+    }
+
+    function pruneHrHistoryData(now = Date.now()) {
+        const visibleStart = getHrHistoryVisibleStart(now);
+
+        while (hrHistoryAggregatedBuckets.length && hrHistoryAggregatedBuckets[0].timestamp < visibleStart) {
+            hrHistoryAggregatedBuckets.shift();
+        }
+
+        if (hrHistoryTransitionBucket && hrHistoryTransitionBucket.timestamp < visibleStart) {
+            hrHistoryTransitionBucket = null;
+        }
+
+        while (hrHistoryRealtimeSamples.length && hrHistoryRealtimeSamples[0].timestamp < visibleStart) {
+            hrHistoryRealtimeSamples.shift();
         }
     }
 
+    function getHrHistoryRenderableSamples(now = Date.now()) {
+        reconcileHrHistoryData(now);
+
+        const visibleStart = getHrHistoryVisibleStart(now);
+        const aggregatedPoints = hrHistoryAggregatedBuckets.filter(sample => sample.timestamp >= visibleStart);
+        const transitionPoints = hrHistoryTransitionBucket && hrHistoryTransitionBucket.timestamp >= visibleStart
+            ? [hrHistoryTransitionBucket]
+            : [];
+        const realtimePoints = hrHistoryRealtimeSamples.filter(sample => sample.timestamp >= visibleStart);
+        const combined = aggregatedPoints.concat(transitionPoints, realtimePoints);
+
+        combined.sort((a, b) => a.timestamp - b.timestamp);
+
+        return combined;
+    }
+
+    function getHrHistoryDebugSnapshot(samples) {
+        if (!samples.length) {
+            return {
+                aggregatedBucketCount: hrHistoryAggregatedBuckets.length,
+                realtimeSampleCount: hrHistoryRealtimeSamples.length,
+                oldestTimestamp: null,
+                newestTimestamp: null,
+                combinedLength: 0
+            };
+        }
+
+        return {
+            aggregatedBucketCount: hrHistoryAggregatedBuckets.length,
+            realtimeSampleCount: hrHistoryRealtimeSamples.length,
+            oldestTimestamp: samples[0].timestamp,
+            newestTimestamp: samples[samples.length - 1].timestamp,
+            combinedLength: samples.length
+        };
+    }
+
+    function hasHrHistoryData() {
+        return hrHistoryAggregatedBuckets.length > 0 || hrHistoryRealtimeSamples.length > 0 || Boolean(hrHistoryTransitionBucket);
+    }
+
     function clearHrHistory() {
-        hrHistory.length = 0;
+        hrHistoryRealtimeSamples.length = 0;
+        hrHistoryAggregatedBuckets.length = 0;
+        hrHistoryTransitionBucket = null;
         updateHrHistoryEmptyState();
         stopHrHistoryAnimation();
         setHrHistoryCurrentPosition(null);
@@ -727,12 +870,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startHrHistoryAnimation() {
         if (hrHistoryAnimationFrame !== null) return;
-        if (!hrHistory.length && lastHeartRate === null) return;
+        if (!hasHrHistoryData()) return;
 
         const tick = () => {
             hrHistoryAnimationFrame = null;
 
-            if (!hrHistory.length && lastHeartRate === null) {
+            if (!hasHrHistoryData()) {
                 return;
             }
 
@@ -763,7 +906,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!width || !height) return;
 
         const now = Date.now();
-        pruneHrHistory(now);
         const graphPadding = window.matchMedia('(orientation: landscape)').matches
             ? { ...HR_GRAPH_PADDING, top: 0, bottom: 0 }
             : HR_GRAPH_PADDING;
@@ -779,20 +921,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         drawHrBackground(ctx, bandLeft, bandTop, plotWidth, plotHeight);
 
-        if (!hrHistory.length || lastHeartRate === null) {
-            setHrHistoryCurrentPosition(null);
-            drawHrHistoryTimeMarkers(ctx, bandLeft, bandTop, plotWidth, plotHeight);
-            drawHrZoneBoundaryLines(ctx, bandLeft, bandTop, plotWidth, plotHeight);
-            drawHrZoneThresholdLabels(ctx, bandLeft, bandTop, plotWidth, plotHeight);
-            drawHrHistoryTimeLabels(ctx, bandLeft, bandTop, plotWidth, plotHeight);
-            return;
-        }
-
         const visibleStart = getHrHistoryVisibleStart(now);
-        const samples = hrHistory
-            .filter(sample => sample.timestamp >= visibleStart)
-            .sort((a, b) => a.timestamp - b.timestamp);
-        if (!samples.length && lastHeartRate === null) {
+        const samples = getHrHistoryRenderableSamples(now);
+        const debugSnapshot = getHrHistoryDebugSnapshot(samples);
+
+        console.assert(
+            samples.every((sample, index) => index === 0 || samples[index - 1].timestamp <= sample.timestamp),
+            'HR history samples must stay chronologically sorted',
+            debugSnapshot
+        );
+
+        if (!samples.length) {
             setHrHistoryCurrentPosition(null);
             drawHrHistoryTimeMarkers(ctx, bandLeft, bandTop, plotWidth, plotHeight);
             drawHrZoneBoundaryLines(ctx, bandLeft, bandTop, plotWidth, plotHeight);
@@ -804,39 +943,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const points = samples.map(sample => {
             return createHrHistoryPoint(sample, visibleStart, bandLeft, plotWidth, bandBottom, plotHeight);
         });
-
-        if (!points.length && lastHeartRate !== null) {
-            points.push({
-                timestamp: now,
-                bpm: lastHeartRate,
-                zoneId: currentZoneId || 0,
-                ...createHrHistoryPoint(
-                    { timestamp: now, bpm: lastHeartRate, zoneId: currentZoneId || 0 },
-                    visibleStart,
-                    bandLeft,
-                    plotWidth,
-                    bandBottom,
-                    plotHeight
-                )
-            });
-        } else {
-            const latestPoint = points[points.length - 1];
-            if (latestPoint.timestamp < now && lastHeartRate !== null) {
-                points.push({
-                    timestamp: now,
-                    bpm: lastHeartRate,
-                    zoneId: currentZoneId || latestPoint.zoneId || 0,
-                    ...createHrHistoryPoint(
-                        { timestamp: now, bpm: lastHeartRate, zoneId: currentZoneId || latestPoint.zoneId || 0 },
-                        visibleStart,
-                        bandLeft,
-                        plotWidth,
-                        bandBottom,
-                        plotHeight
-                    )
-                });
-            }
-        }
 
         const latestPoint = points[points.length - 1] || null;
         const segments = buildHrHistoryAreaSegments(points);
